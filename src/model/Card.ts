@@ -1,8 +1,9 @@
 export class Card {
 
     private _symbol!: String;
-    private _number!: Number;
+    private _number!: Number;   //「!」の作用は...
     private _isHited: Boolean = false;
+    
 
     constructor(newSymbol: String, newNumber: Number, newIsHited: Boolean = false) {
         this.symbol = newSymbol;

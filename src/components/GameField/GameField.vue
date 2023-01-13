@@ -1,19 +1,19 @@
 <template>
   <div class="cards">
-    <div :class="card.CardStyle" v-for="card in testCards">
-      <img :src="cardUrls[card.index]" />
+    <div v-for="card in testCards">
+      <OneCard :card="card"/>
     </div>
   </div>
 </template>
-
-
 <script setup lang="ts">
+import OneCard from "./Cards/OneCard.vue";
+import { Card } from "../../model/Card";
+
 // ================================NOTICE
 //when hover, there is a stange white space...
 //Cardについての処理はバックエンドでさらにpropertiesを増やせばいいなのか、
 //今みたいにフロントエンドしか使わない処理をcomponentsで処理した方がいいなのか
 
-import { Card } from "../../../model/Card";
 // let cardUrls: string[] = [];
 let isHited: Boolean[] = [];
 
@@ -22,33 +22,28 @@ let isHited: Boolean[] = [];
 let testCards = [
   {
     Card: new Card("hearts", 13, true),
-    // CardUrl: cardUrls[0], 
+    CardUrl: './assets/Cards/h13.png', 
     CardStyle: checkhit(isHited[0]),
-    index: 0
   },
   {
     Card: new Card("diamonds", 6, true),
-    // CardUrl: cardUrls[1],
+    CardUrl: './assets/Cards/d6.png',
     CardStyle: checkhit(isHited[1]),
-    index: 1
   },
   {
     Card: new Card("spades", 2, true),
-    // CardUrl: cardUrls[2],
+    CardUrl: './assets/Cards/s2.png',
     CardStyle: checkhit(isHited[2]),
-    index: 2
   },
   {
     Card: new Card("hearts", 7, true),
-    // CardUrl: cardUrls[3],
+    CardUrl: './assets/Cards/h7.png',
     CardStyle: checkhit(isHited[3]),
-    index:3
   },
   {
     Card: new Card("clubs", 13, true),
-    // CardUrl: cardUrls[4],
+    CardUrl: './assets/Cards/c13.png',
     CardStyle: checkhit(isHited[4]),
-    index:4
   }
 ];
 
@@ -70,7 +65,7 @@ isHited = [
 
 
 function checkhit(status:Boolean){
-  let cardStyle = (status ? "isHited" : "unHited") + " " + "oneCard";
+  let cardStyle = (status ? "unHited" : "isHited") + " " + "oneCard";
   return cardStyle;
 }
 
@@ -114,46 +109,8 @@ function getCardUrl(card: Card) {
 //3. focus animation(optional)選取卡片時應該要用vue綁定...
 // WIN, BUST, BLACKJACK act as a big div
 </script>
-
 <style scoped>
 .cards {
   display: flex;
 }
-.oneCard img {
-  width: 100%;
-}
-
-.oneCard {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  margin: 30px;
-  width: 200px;
-  box-shadow: 8px 8px 15px rgba(0, 0, 0, 0.616);
-}
-
-.oneCard:hover {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  margin: 30px;
-  width: 220px;
-  box-shadow: 8px 8px 15px rgba(0, 0, 0, 0.616);
-  filter: brightness(1.3) contrast(130%);
-  transition: 0.3s;
-}
-
-.isHited {
-  animation: 3s infinite alternate slidein;
-}
-
-/* @keyframes dropdown {
-  from {
-    top: 0;
-  }
-  to {
-    bottom: 200px;
-  }
-} */
 </style>
-
