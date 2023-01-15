@@ -2,22 +2,28 @@ import { Card } from "./Card";
 
 export class Player {
 
-    private _money!: Number;
+    private _handMoney: number = 1;
+    private _allMoney!: number;
     private _cards!: Card[];
-    private _points!: Number;
+    private _points!: number;
     private _isStand!: Boolean;
     private _isDoubledown!: Boolean;
 
-    constructor(){
+    constructor() {
         //要補上
     }
-
-
-    public get money(): Number {
-        return this._money;
+    public get handMoney(): number {
+        return this._handMoney;
     }
-    public set money(value: Number) {
-        this._money = value;
+    public set handMoney(value: number) {
+        this._handMoney = value;
+    }
+
+    public get allMoney(): number {
+        return this._allMoney;
+    }
+    public set allMoney(value: number) {
+        this._allMoney = value;
     }
     public get cards(): Card[] {
         return this._cards;
@@ -25,10 +31,10 @@ export class Player {
     public set cards(value: Card[]) {
         this._cards = value;
     }
-    public get points(): Number {
+    public get points(): number {
         return this._points;
     }
-    public set points(value: Number) {
+    public set points(value: number) {
         this._points = value;
     }
     public get isStand(): Boolean {

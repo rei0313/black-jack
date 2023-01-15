@@ -2,7 +2,7 @@ import { Card } from "../model/Card";
 import { Player } from "../model/Player";
 import { CardDao } from "../model/CardDao";
 
-export class Playercontroller {
+export class PlayerController {
     private card!: Card;
     private cardDao!: CardDao;
 
@@ -28,31 +28,49 @@ export class Playercontroller {
         return symbol;
     }
 
-    public hit(): Card {
+    private getNewCard(): Card {
+        let newCard = new Card(this.getSymbol(), this.getRandom(13), false);
+        return newCard;
+    }
+
+
+
+    public hit(player: Player): void {
         //残るカードのデータをゲット→ランダムで一枚のカードを作成
         //1~13 & 4symbol random->if existed, new another card
         //isHited=false一旦残し、アニメーションの様子を見ながら調整
         let lastedCards: Card[] = this.cardDao.getLastedCards();
-        let newCard = new Card(this.getSymbol(), this.getRandom(13), false);
+        let newCard = this.getNewCard();
 
         for (let i = 0; i < lastedCards.length; i++) {
             if (lastedCards[i] == newCard) {
-                newCard = new Card(this.getSymbol(), this.getRandom(13), false);
+                newCard = this.getNewCard();
                 i = 0;
             };
         }
-        return newCard;
+        //give a new card to the player
+        player.cards.push(newCard);
     }
 
-    public stand(player:Player): void{
+    public stand(player: Player): void {        
         //不用新增Card的properties，用player狀態操作<div>OneCards<div/>的class
         //視情況再包一層components
-       //get set取值...?
-        
+        player.isStand = true;
     }
+
+    public doubleDown(player: Player): void {
+        player.handMoney = player.handMoney * 2;
+        player.isDoubledown = true;
+    }
+
+    public strat(player: Player): void {
+        //重複卡牌是否需要判斷？
+        let newCards: Card[] = [this.getNewCard(), this.getNewCard()];
+        player.cards = newCards;
+
+    }
+
     
-    //Stand
-    //DoubleDown
     //Split(what is splite?)
     //Login
     //Logout
