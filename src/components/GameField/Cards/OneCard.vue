@@ -1,12 +1,18 @@
 <template>
   <img :src="card.CardUrl" :class="card.CardStyle" />
+  <!-- <button @click="check">card</button> -->
 </template>
 
 <script setup lang="ts">
 
 import { Card } from "../../../model/Card";
+import { defineProps } from "vue";
 
 defineProps<{ card: any }>()
+
+// function check(){
+//   console.log(card);
+// }
 
 
 </script>

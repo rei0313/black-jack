@@ -1,4 +1,5 @@
 import { Card } from "./Card";
+import { GameStatus } from "./GameStatus";
 
 export class Player {
 
@@ -6,12 +7,24 @@ export class Player {
     private _allMoney!: number;
     private _cards!: Card[];
     private _points!: number;
-    private _isStand!: Boolean;
-    private _isDoubledown!: Boolean;
+    private _gameStatus!: GameStatus;
 
-    constructor() {
-        //要補上
+    constructor(newhandmoney: number, newallmoney: number, newcards: Card[], newpoints: number, newgameStatus: GameStatus) {
+        this.handMoney = newhandmoney;
+        this.allMoney = newallmoney;
+        this.cards = newcards;
+        this.points = newpoints;
+        this.gameStatus = newgameStatus;
     }
+
+
+    public get gameStatus(): GameStatus {
+        return this._gameStatus;
+    }
+    public set gameStatus(value: GameStatus) {
+        this._gameStatus = value;
+    }
+
     public get handMoney(): number {
         return this._handMoney;
     }
@@ -37,18 +50,8 @@ export class Player {
     public set points(value: number) {
         this._points = value;
     }
-    public get isStand(): Boolean {
-        return this._isStand;
-    }
-    public set isStand(value: Boolean) {
-        this._isStand = value;
-    }
-    public get isDoubledown(): Boolean {
-        return this._isDoubledown;
-    }
-    public set isDoubledown(value: Boolean) {
-        this._isDoubledown = value;
-    }
+
+}
 
 
     //money
@@ -59,4 +62,3 @@ export class Player {
 
 
     //only get&set. change status in controller file
-}

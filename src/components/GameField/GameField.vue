@@ -1,13 +1,14 @@
 <template>
   <div class="cards">
-    <div v-for="card in testCards">
-      <OneCard :card="card"/>
+    <div v-for="card in testCards" :key="card.CardUrl">
+      <OneCard :card="card" />
     </div>
   </div>
+  
 </template>
 <script setup lang="ts">
-import OneCard from "./Cards/OneCard.vue";
 import { Card } from "../../model/Card";
+import OneCard from './Cards/OneCard.vue';  //dont delete
 
 // ================================NOTICE
 //when hover, there is a stange white space...
@@ -17,33 +18,32 @@ import { Card } from "../../model/Card";
 // let cardUrls: string[] = [];
 let isHited: Boolean[] = [];
 
-
 //しばらくはnew Cardで対応
 let testCards = [
   {
-    Card: new Card("hearts", 13, true),
-    CardUrl: './assets/Cards/h13.png', 
-    CardStyle: checkhit(isHited[0]),
+    Card: new Card("hearts", 13, true, false, 10),
+    CardUrl: "./assets/Cards/h13.png",
+    CardStyle: checkhit(isHited[0])
   },
   {
-    Card: new Card("diamonds", 6, true),
-    CardUrl: './assets/Cards/d6.png',
-    CardStyle: checkhit(isHited[1]),
+    Card: new Card("diamonds", 6, true, false, 6),
+    CardUrl: "./assets/Cards/d6.png",
+    CardStyle: checkhit(isHited[1])
   },
   {
-    Card: new Card("spades", 2, true),
-    CardUrl: './assets/Cards/s2.png',
-    CardStyle: checkhit(isHited[2]),
+    Card: new Card("spades", 2, true, false, 2),
+    CardUrl: "./assets/Cards/s2.png",
+    CardStyle: checkhit(isHited[2])
   },
   {
-    Card: new Card("hearts", 7, true),
-    CardUrl: './assets/Cards/h7.png',
-    CardStyle: checkhit(isHited[3]),
+    Card: new Card("hearts", 7, true, false, 7),
+    CardUrl: "./assets/Cards/h7.png",
+    CardStyle: checkhit(isHited[3])
   },
   {
-    Card: new Card("clubs", 13, true),
-    CardUrl: './assets/Cards/c13.png',
-    CardStyle: checkhit(isHited[4]),
+    Card: new Card("clubs", 13, true, false, 10),
+    CardUrl: "./assets/Cards/c13.png",
+    CardStyle: checkhit(isHited[4])
   }
 ];
 
@@ -63,13 +63,10 @@ isHited = [
   testCards[4].Card.isHited
 ];
 
-
-function checkhit(status:Boolean){
+function checkhit(status: Boolean) {
   let cardStyle = (status ? "unHited" : "isHited") + " " + "oneCard";
   return cardStyle;
 }
-
-
 
 //最多5張。一開始就建立5張牌，但還沒發的牌isHited設為false，用v-if顯示
 
@@ -92,7 +89,7 @@ function getCardUrl(card: Card) {
       break;
     default:
       console.log(`END`);
-    return filename;
+      return filename;
   }
 
   let cradpath = ".\\assets\\Cards\\" + filename + ".png";
