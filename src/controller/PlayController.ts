@@ -7,15 +7,15 @@ import { CardPoolController } from "./CardPoolController";
 export class PlayerController {
     // private card!: Card;
     // private cardDao!: CardDao;
-    private cardPool!: CardPoolController;
+    private cardPool = new CardPoolController;
 
     private getRandom(x: number): number {
         return Math.floor(Math.random() * x) + 1;
     };
 
-    private getSymbol(): String {
+    private getSymbol(): string {
         let symbolnum = this.getRandom(4);
-        let symbol: String = "";
+        let symbol: string = "";
 
         switch (symbolnum) {
             case 1:
@@ -65,6 +65,7 @@ export class PlayerController {
         //1~13 & 4symbol random->if existed, new another card
         //isHited=false一旦残し、アニメーションの様子を見ながら調整
         let lastedCards: Card[] = this.cardPool.getLastedCards();
+        // let lastedCards: Card[] = [new Card("hearts", 6, false, false, 6), new Card("diamonds", 2, false, false, 2)]
         let newCard = this.getNewCard();
 
         for (let i = 0; i < lastedCards.length; i++) {

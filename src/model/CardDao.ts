@@ -7,7 +7,7 @@ export class CardDao {
 
     public getDefaultCardPool():Card[]{
         
-        // do someting with database
+        // 現在發牌在playcontroller發，好像不需要...？
         let defaultCards:Card[]=[];
         return defaultCards;
     }

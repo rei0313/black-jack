@@ -1,113 +1,160 @@
 <template>
-  <div class="cards">
-    <div v-for="card in testCards" :key="card.CardUrl">
-      <OneCard :card="card" />
+  <div class="background">
+    <div class="cards">
+      <div v-for="card in testCards" :key="card.imgPath">
+        <OneCard :card="card" />
+      </div>
     </div>
+    <div class="buttons">
+      <button class="button" v-for="button in buttons" @click="button.method" :key="button.name">
+        <p>{{button.name}}</p>
+        <div class="btn"></div>
+      </button>
+    </div>
+    <div class="playerStatus">
+      <div class="bet"></div>
+      <div class="money">
+        <div class="moneyImg"></div>
+      </div>
+      <div class="playerData"></div>
+    </div>
+    <video autoplay muted loop id="backgroundVedio">
+      <source
+        src="../../../public/assets/Free Animation Loop Background_ Pixel Blocks.mp4"
+        type="video/mp4"
+      />
+    </video>
   </div>
-  
 </template>
 <script setup lang="ts">
 import { Card } from "../../model/Card";
-import OneCard from './Cards/OneCard.vue';  //dont delete
+import OneCard from "./Cards/OneCard.vue"; //dont delete
+import { addDoc, Timestamp, collection } from "firebase/firestore";
+import { db } from "../../firebase";
+import { PlayerController } from "../../controller/PlayController";
+import { Player } from "../../model/Player";
+import { GameStatus } from "../../model/GameStatus";
 
-// ================================NOTICE
-//when hover, there is a stange white space...
-//Cardについての処理はバックエンドでさらにpropertiesを増やせばいいなのか、
-//今みたいにフロントエンドしか使わない処理をcomponentsで処理した方がいいなのか
+/*issue of this file:
+when button active, a wired border shows...
+*/
 
-// let cardUrls: string[] = [];
-let isHited: Boolean[] = [];
+//temp!! importing written methods
+
+let testPlayer1 = new Player(
+  1,
+  21,
+  [],
+  0,
+  new GameStatus(false, false, false, false)
+);
+const playerControl = new PlayerController();
+
+function hit(): void {
+  playerControl.hit(testPlayer1);
+  console.log(testPlayer1);
+}
+
+function stand(): void {
+  playerControl.stand(testPlayer1);
+  console.log(testPlayer1);
+}
+
+function doubleDown(): void {
+  playerControl.doubleDown(testPlayer1);
+  console.log(testPlayer1);
+}
+
+function split(): void {}
+//===========temp above
+let buttons = [
+  { name: "HIT", method: hit },
+  { name: "STAND", method: stand },
+  { name: "DOUBLE DOWN", method: doubleDown },
+  { name: "SPLIT", method: split }
+];
+
+
+
 
 //しばらくはnew Cardで対応
 let testCards = [
-  {
-    Card: new Card("hearts", 13, true, false, 10),
-    CardUrl: "./assets/Cards/h13.png",
-    CardStyle: checkhit(isHited[0])
-  },
-  {
-    Card: new Card("diamonds", 6, true, false, 6),
-    CardUrl: "./assets/Cards/d6.png",
-    CardStyle: checkhit(isHited[1])
-  },
-  {
-    Card: new Card("spades", 2, true, false, 2),
-    CardUrl: "./assets/Cards/s2.png",
-    CardStyle: checkhit(isHited[2])
-  },
-  {
-    Card: new Card("hearts", 7, true, false, 7),
-    CardUrl: "./assets/Cards/h7.png",
-    CardStyle: checkhit(isHited[3])
-  },
-  {
-    Card: new Card("clubs", 13, true, false, 10),
-    CardUrl: "./assets/Cards/c13.png",
-    CardStyle: checkhit(isHited[4])
-  }
+  new Card("hearts", 6, false, false, 6),
+  new Card("diamonds", 9, false, false, 9),
+  new Card("spades", 1, false, false, 1),
+  new Card("diamonds", 5, false, false, 5),
+  new Card("clubs", 6, false, false, 6)
 ];
 
-let cardUrls = $ref([
-  getCardUrl(testCards[0].Card),
-  getCardUrl(testCards[1].Card),
-  getCardUrl(testCards[2].Card),
-  getCardUrl(testCards[3].Card),
-  getCardUrl(testCards[4].Card)
-]);
-
-isHited = [
-  testCards[0].Card.isHited,
-  testCards[1].Card.isHited,
-  testCards[2].Card.isHited,
-  testCards[3].Card.isHited,
-  testCards[4].Card.isHited
-];
-
-function checkhit(status: Boolean) {
-  let cardStyle = (status ? "unHited" : "isHited") + " " + "oneCard";
-  return cardStyle;
-}
-
-//最多5張。一開始就建立5張牌，但還沒發的牌isHited設為false，用v-if顯示
-
-function getCardUrl(card: Card) {
-  // console.log(testCard.number + " " + testCard.symbol);
-  let filename: string = "";
-
-  switch (card.symbol) {
-    case "clubs":
-      filename = "c" + card.number;
-      break;
-    case "diamonds":
-      filename = "d" + card.number;
-      break;
-    case "hearts":
-      filename = "h" + card.number;
-      break;
-    case "spades":
-      filename = "s" + card.number;
-      break;
-    default:
-      console.log(`END`);
-      return filename;
-  }
-
-  let cradpath = ".\\assets\\Cards\\" + filename + ".png";
-  console.log(cradpath);
-  return cradpath; //retrun a string
-}
-//1. Get a Card object (maybe from fetch...? or localstroage...?)
-//2. execute getCardUrl()
-//3. bind cardUrl into component
-
-//CSS style Memo
-//1. hit animation
-//2. hover animation(done)
-//3. focus animation(optional)選取卡片時應該要用vue綁定...
-// WIN, BUST, BLACKJACK act as a big div
+//表示できなくなってる；；
+// let testCards = testPlayer1.cards;
 </script>
 <style scoped>
 .cards {
   display: flex;
+}
+
+.buttons {
+  display: flex;
+  text-align: center;
+  justify-content: center;
+}
+
+.button {
+  position: relative;
+  text-align: center;
+  margin-right: 50px;
+  margin-left: 50px;
+}
+
+.button p {
+  position: absolute;
+  top: 41%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  line-height: 17px;
+  font-size: 20px;
+  pointer-events: none;
+}
+
+.button:active p {
+  top: 50%;
+  left: 50%;
+}
+
+.btn {
+  background-image: url("../../../public/assets/UI/keyboard_203.png");
+  width: 10rem;
+  height: 3rem;
+  background-size: 100%;
+}
+
+.btn:active {
+  background-image: url("../../../public/assets/UI/keyboard_212.png");
+}
+
+#backgroundVedio {
+  position: fixed;
+  right: 0;
+  bottom: 0;
+  min-width: 100%;
+  min-height: 100%;
+  z-index: -1;
+}
+
+* {
+  font-family: "Pixel";
+}
+
+.moneyImg {
+  width: 48px;
+  height: 48px;
+  animation: play steps(5) 2s infinite;
+  background-image: url("../../../public/assets/coins/MonedaD_Big.png");
+}
+
+@keyframes play {
+  0% { background-position:  0  0; }
+100% { background-position: -240px 0;  }
 }
 </style>

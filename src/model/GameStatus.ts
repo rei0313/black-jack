@@ -9,12 +9,12 @@ export class GameStatus {
     //"win","lose","playing","standby"
     //not sure if all boolean would be better
 
-    constructor (isStand: boolean, isDoubledown: boolean, isBlackJack: boolean, isBust: boolean, status: string) {
+    constructor (isStand: boolean, isDoubledown: boolean, isBlackJack: boolean, isBust: boolean) {
         this._isStand = isStand;
         this._isDoubledown = isDoubledown;
         this._isBlackJack = isBlackJack;
         this._isBust = isBust;
-        this._status = status;
+        this._status = "standby";
 
     }
 

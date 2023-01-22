@@ -1,5 +1,5 @@
 <template>
-  <img :src="card.CardUrl" :class="card.CardStyle" />
+  <img :src="card.imgPath" :class="card.style" class="oneCard" />
   <!-- <button @click="check">card</button> -->
 </template>
 
@@ -8,7 +8,7 @@
 import { Card } from "../../../model/Card";
 import { defineProps } from "vue";
 
-defineProps<{ card: any }>()
+defineProps<{ card: Card }>()
 
 // function check(){
 //   console.log(card);
@@ -43,6 +43,8 @@ defineProps<{ card: any }>()
   transition: 0.3s;
 }
 
+
+/* 還沒寫動畫!! */
 .isHited {
   animation-name: dropdown;
 }
