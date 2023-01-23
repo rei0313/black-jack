@@ -20,12 +20,16 @@ export class PlayerController {
         switch (symbolnum) {
             case 1:
                 symbol = 'clubs';
+                break;
             case 2:
                 symbol = 'diamonds';
+                break;
             case 3:
                 symbol = 'hearts';
+                break;
             case 4:
                 symbol = 'spades';
+                break;
         }
 
         return symbol;

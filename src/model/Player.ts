@@ -3,13 +3,17 @@ import { GameStatus } from "./GameStatus";
 
 export class Player {
 
+    private _name!: string;
+    private _id!: number;
     private _handMoney: number = 1;
     private _allMoney!: number;
     private _cards!: Card[];
     private _points!: number;
     private _gameStatus!: GameStatus;
 
-    constructor(newhandmoney: number, newallmoney: number, newcards: Card[], newpoints: number, newgameStatus: GameStatus) {
+    constructor(newName: string, newId: number, newhandmoney: number, newallmoney: number, newcards: Card[], newpoints: number, newgameStatus: GameStatus) {
+        this._name = newName;
+        this._id = newId;
         this.handMoney = newhandmoney;
         this.allMoney = newallmoney;
         this.cards = newcards;
@@ -49,6 +53,18 @@ export class Player {
     }
     public set points(value: number) {
         this._points = value;
+    }
+    public get id(): number {
+        return this._id;
+    }
+    public set id(value: number) {
+        this._id = value;
+    }
+    public get name(): string {
+        return this._name;
+    }
+    public set name(value: string) {
+        this._name = value;
     }
 
 }

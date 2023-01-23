@@ -9,6 +9,7 @@ import { Card } from "../../../model/Card";
 import { defineProps } from "vue";
 
 defineProps<{ card: Card }>()
+// const props = defineProps({ card: Card });
 
 // function check(){
 //   console.log(card);

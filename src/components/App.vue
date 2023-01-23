@@ -17,6 +17,6 @@ import { Card } from "../model/Card";
   font-display: auto;
   unicode-range: U+000-5FF;
   src: local("Pixel"),
-    url("../../../public/assets/font/PixelMplus12-Bold.ttf") format("truetype");
+    url("../../../assets/font/PixelMplus12-Bold.ttf") format("truetype");
 }
 </style>

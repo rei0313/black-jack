@@ -1,5 +1,6 @@
 
 export class GameStatus {
+    [x: string]: any;
 
     private _isStand: boolean = false;
     private _isDoubledown: boolean = false;

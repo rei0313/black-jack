@@ -2,6 +2,7 @@
   <div class="background">
     <div class="cards">
       <div v-for="card in testCards" :key="card.imgPath">
+        <!-- let cardsStyle = (testPlayer1.gameStatus.isBust:"isBust "?"") -->
         <OneCard :card="card" />
       </div>
     </div>
@@ -12,15 +13,32 @@
       </button>
     </div>
     <div class="playerStatus">
-      <div class="bet"></div>
+      <div class="bet">
+        <div class="betImg"></div>
+        <div class="subtitle">BET MONEY:</div>
+        <div class="subNumber">{{ testPlayer1.handMoney }}</div>
+      </div>
       <div class="money">
         <div class="moneyImg"></div>
+        <div class="subtitle">HAND MONEY:</div>
+        <div class="subNumber">{{testPlayer1.allMoney}}</div>
       </div>
-      <div class="playerData"></div>
+      <div class="point">
+        <div class="pointImg"></div>
+        <div class="subtitle">POINT:</div>
+        <div class="subNumber">{{testPlayer1.points}}</div>
+      </div>
+    </div>
+    <div class="playerStatus">
+      <div class="playerData">
+        <div class="playerImg"></div>
+        <div class="subtitle">PLAYER NAME:</div>
+        <div class="subNumber">{{testPlayer1.name}}</div>
+      </div>
     </div>
     <video autoplay muted loop id="backgroundVedio">
       <source
-        src="../../../public/assets/Free Animation Loop Background_ Pixel Blocks.mp4"
+        src="../../../assets/Free Animation Loop Background_ Pixel Blocks.mp4"
         type="video/mp4"
       />
     </video>
@@ -36,23 +54,42 @@ import { Player } from "../../model/Player";
 import { GameStatus } from "../../model/GameStatus";
 
 /*issue of this file:
-when button active, a wired border shows...
+1. ゲームを始まるには無限ループが必要...？
+2. また詰んだらdealerの画面を作ろう！
 */
 
-//temp!! importing written methods
 
-let testPlayer1 = new Player(
-  1,
-  21,
-  [],
-  0,
-  new GameStatus(false, false, false, false)
+
+let testPlayer1 = $ref(
+  new Player(
+    "testPlayer1",
+    10001,
+    1,
+    21,
+    [],
+    0,
+    new GameStatus(false, false, false, false)
+  )
 );
 const playerControl = new PlayerController();
+
+//compute this function!!
+//using boolean is easier to build the game logic, but here I want to get string for dynamic class...
+function getStyleString(player: Player) {
+  let cardsStyle: string = "";
+  if (player.gameStatus.isBlackJack) cardsStyle += "isBlackJack ";
+  if (player.gameStatus.isBust) cardsStyle += "isBust ";
+  if (player.gameStatus.isDoubledown) cardsStyle += "isDoubledown ";
+  if (player.gameStatus.isStand) cardsStyle += "isStand ";
+  // console.log(cardsStyle);
+  return cardsStyle;
+}
 
 function hit(): void {
   playerControl.hit(testPlayer1);
   console.log(testPlayer1);
+  // console.log(testPlayer1.gameStatus.isStand);
+  // cardsStyle(testPlayer1);
 }
 
 function stand(): void {
@@ -74,24 +111,24 @@ let buttons = [
   { name: "SPLIT", method: split }
 ];
 
-
-
-
 //しばらくはnew Cardで対応
-let testCards = [
-  new Card("hearts", 6, false, false, 6),
-  new Card("diamonds", 9, false, false, 9),
-  new Card("spades", 1, false, false, 1),
-  new Card("diamonds", 5, false, false, 5),
-  new Card("clubs", 6, false, false, 6)
-];
+// let testCards = [
+//   new Card("hearts", 6, false, false, 6),
+//   new Card("diamonds", 9, false, false, 9),
+//   new Card("spades", 1, false, false, 1),
+//   new Card("diamonds", 5, false, false, 5),
+//   new Card("clubs", 6, false, false, 6)
+// ];
 
 //表示できなくなってる；；
-// let testCards = testPlayer1.cards;
+let testCards = $computed(() => testPlayer1.cards);
 </script>
 <style scoped>
 .cards {
   display: flex;
+  justify-content: center;
+  height: 350px;
+  widows: 1200px;
 }
 
 .buttons {
@@ -123,14 +160,14 @@ let testCards = [
 }
 
 .btn {
-  background-image: url("../../../public/assets/UI/keyboard_203.png");
+  background-image: url("../../../assets/UI/keyboard_203.png");
   width: 10rem;
   height: 3rem;
   background-size: 100%;
 }
 
 .btn:active {
-  background-image: url("../../../public/assets/UI/keyboard_212.png");
+  background-image: url("../../../assets/UI/keyboard_212.png");
 }
 
 #backgroundVedio {
@@ -153,8 +190,71 @@ let testCards = [
   background-image: url("../../../public/assets/coins/MonedaD_Big.png");
 }
 
+.betImg {
+  width: 48px;
+  height: 48px;
+  animation: play steps(5) 2s infinite;
+  background-image: url("../../../public/assets/coins/MonedaP_Big.png");
+}
+
+.playerImg {
+  width: 48px;
+  height: 48px;
+  animation: player-play steps(4) 2s infinite;
+  background-image: url("../../../public/assets/coins/spr_coin_strip4_Big.png");
+}
+
+.pointImg {
+  width: 48px;
+  height: 48px;
+  animation: play steps(5) 2s infinite;
+  background-image: url("../../../public/assets/coins/MonedaR_Big.png");
+}
+
 @keyframes play {
-  0% { background-position:  0  0; }
-100% { background-position: -240px 0;  }
+  0% {
+    background-position: 0 0;
+  }
+  100% {
+    background-position: -240px 0;
+  }
+}
+
+@keyframes player-play {
+  0% {
+    background-position: 0 0;
+  }
+  100% {
+    background-position: -192px 0;
+  }
+}
+
+.playerStatus,
+.money,
+.bet,
+.playerData,
+.point {
+  display: flex;
+  justify-content: center;
+  margin: 10px;
+}
+
+.subtitle {
+  font-size: 40px;
+  color: aliceblue;
+  text-align: center;
+  /* add this 2 to make text align center */
+  display: flex;
+  align-items: center;
+}
+
+.subNumber {
+  font-size: 40px;
+  color: rgb(255, 241, 40);
+  text-align: right;
+  /* add this 2 to make text align center */
+  display: flex;
+  align-items: center;
+  /* width: 1px; */
 }
 </style>
