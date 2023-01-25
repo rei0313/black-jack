@@ -3,6 +3,8 @@ import { Player } from "../model/Player";
 // import { CardDao } from "../model/CardDao";
 import { Dealer } from "../model/Dealer";
 import { CardPoolController } from "./CardPoolController";
+import { CardsStatus } from "../model/CardsStatus";
+import { GameStatus } from "../model/GameStatus";
 
 export class PlayerController {
     // private card!: Card;
@@ -86,7 +88,7 @@ export class PlayerController {
     public stand(player: Player): void {
         //不用新增Card的properties，用player狀態操作<div>OneCards<div/>的class
         //視情況再包一層components
-        player.gameStatus.isStand = true;
+        player.cardsStatus = CardsStatus.isStand;
     }
 
 
@@ -95,7 +97,7 @@ export class PlayerController {
     public doubleDown(player: Player): void {
         player.handMoney = player.handMoney * 2;    //double moner
         this.hit(player);   //add a new card
-        player.gameStatus.isDoubledown = true;
+        player.cardsStatus = 2;
         //recount point
         this.countPoints(player);
 
@@ -104,12 +106,10 @@ export class PlayerController {
     public newRound(player: Player, dealer: Dealer): void {
         //重複卡牌是否需要判斷？被ったかどうかを判定？
         //之後記得精簡寫法...這樣好醜
+        //發牌時間差？
         //set player hand money to 1
-        player.gameStatus.isBlackJack = false;
-        player.gameStatus.isBust = false;
-        player.gameStatus.isDoubledown = false;
-        player.gameStatus.isStand = false;
-        player.gameStatus.status = "playing";
+        player.cardsStatus = CardsStatus.none;
+        player.gameStatus= GameStatus.playing;
         player.cards = [this.getNewCard(), this.getNewCard()];
         dealer.cards = [this.getNewCard(), this.getNewCard()];
         this.countPoints(player);
@@ -123,8 +123,8 @@ export class PlayerController {
 
     //if card==A , it might count as 1 or 10(default 10)
     public changeAce(card: Card, player: Player): void {
-        if (card.number == 1) {
-            if (card.point == 10) {
+        if (card.number === 1) {
+            if (card.point === 10) {
                 card.point = 1;
             } else {
                 card.point = 10;
@@ -136,21 +136,22 @@ export class PlayerController {
 
 
     public endRound(player: Player, dealer: Dealer): void {
-        if (player.gameStatus.isBust == false || player.gameStatus.isBlackJack == false) {
+        //如果沒有bust或blackjack
+        if (player.cardsStatus === CardsStatus.none) {
             if (player.points > dealer.points) {
-                player.gameStatus.status = "win";
+                player.gameStatus = GameStatus.win;
             } else {
-                player.gameStatus.status = "lose";
+                player.gameStatus = GameStatus.lose;
             }
         } else {
             console.log('Logical ERROR !!  PlayerController')
         }
 
-        if (player.gameStatus.status == "win") {
+        if (player.gameStatus == GameStatus.win) {
             //get dealer's handmoney
             player.handMoney = player.handMoney + dealer.handMoney;
             dealer.handMoney = 0;
-        } else if (player.gameStatus.status == "lose") {
+        } else if (player.gameStatus == GameStatus.lose) {
             //lose all handmoney
             dealer.handMoney = player.handMoney + dealer.handMoney;
             player.handMoney = 0;
@@ -162,7 +163,7 @@ export class PlayerController {
         player.allMoney = player.allMoney + player.handMoney;
         dealer.allMoney = dealer.allMoney + dealer.handMoney;
 
-
+        player.gameStatus = GameStatus.standby;
         //check points bigger or smaller
         //change status "win" or "lose"
         //give or take player's all money
@@ -171,14 +172,14 @@ export class PlayerController {
     public isBust(player: Player): void {
         this.countPoints(player);
         if (player.points > 21) {
-            player.gameStatus.isBust = true;
+            player.cardsStatus = CardsStatus.isBust;
         }
     };
 
     public isBlackJack(player: Player): void {
         this.countPoints(player);
         if (player.points == 21) {
-            player.gameStatus.isBlackJack = true;
+            player.cardsStatus = CardsStatus.isBlackJack;
         }
     }
 
@@ -204,5 +205,5 @@ export class PlayerController {
     //Login
     //Logout
 
-    
+
 }

@@ -1,4 +1,5 @@
 import { Card } from "./Card";
+import { CardsStatus } from "./CardsStatus";
 import { GameStatus } from "./GameStatus";
 
 export class Player {
@@ -10,8 +11,10 @@ export class Player {
     private _cards!: Card[];
     private _points!: number;
     private _gameStatus!: GameStatus;
+    private _cardsStatus!: CardsStatus;
+    //gamestatus拆成兩個enum:一組控制牌組狀態、一組控制輸贏
 
-    constructor(newName: string, newId: number, newhandmoney: number, newallmoney: number, newcards: Card[], newpoints: number, newgameStatus: GameStatus) {
+    constructor(newName: string, newId: number, newhandmoney: number, newallmoney: number, newcards: Card[], newpoints: number, newgameStatus: GameStatus, newcardStatus: CardsStatus) {
         this._name = newName;
         this._id = newId;
         this.handMoney = newhandmoney;
@@ -19,6 +22,7 @@ export class Player {
         this.cards = newcards;
         this.points = newpoints;
         this.gameStatus = newgameStatus;
+        this.cardsStatus = newcardStatus;
     }
 
 
@@ -66,7 +70,12 @@ export class Player {
     public set name(value: string) {
         this._name = value;
     }
-
+    public get cardsStatus(): CardsStatus {
+        return this._cardsStatus;
+    }
+    public set cardsStatus(value: CardsStatus) {
+        this._cardsStatus = value;
+    }
 }
 
 
