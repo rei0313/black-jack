@@ -110,6 +110,11 @@ export class PlayerController {
         //set player hand money to 1
         player.cardsStatus = CardsStatus.none;
         player.gameStatus= GameStatus.playing;
+        // setTimeout(()=>{player.cards.push(this.getNewCard())},1000);
+        // setTimeout(()=>{dealer.cards.push(this.getNewCard())},1500);
+        // setTimeout(()=>{player.cards.push(this.getNewCard())},2000);
+        // setTimeout(()=>{dealer.cards.push(this.getNewCard())},2500);
+
         player.cards = [this.getNewCard(), this.getNewCard()];
         dealer.cards = [this.getNewCard(), this.getNewCard()];
         this.countPoints(player);
@@ -118,6 +123,8 @@ export class PlayerController {
         player.allMoney - 1;
         dealer.handMoney = 1;
         dealer.handMoney - 1;
+
+
 
     }
 

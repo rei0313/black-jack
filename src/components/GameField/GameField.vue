@@ -1,5 +1,10 @@
 <template>
   <div class="background">
+    <div class="cards" >
+      <div v-for="dealercard in dealerCards" :key="dealercard.imgPath">
+        <DealerCard :dealercard="dealercard" />
+      </div>
+    </div>
     <div v-if="testPlayer1.cardsStatus==CardsStatus.isBust" class="statuBox">
       <span>BUST !</span>
     </div>
@@ -15,7 +20,7 @@
       <span>DOUBLE DOWN</span>
     </div>
     <div class="cards" :class="cardsStyle">
-      <div v-for="card in testCards" :key="card.imgPath">
+      <div v-for="card in playerCards" :key="card.imgPath">
         <OneCard :card="card" />
       </div>
     </div>
@@ -60,6 +65,7 @@
 <script setup lang="ts">
 import { Card } from "../../model/Card";
 import OneCard from "./Cards/OneCard.vue"; //dont delete
+import DealerCard from "./Cards/DealerCard.vue"; 
 import { addDoc, Timestamp, collection } from "firebase/firestore";
 import { db } from "../../firebase";
 import { PlayerController } from "../../controller/PlayController";
@@ -87,7 +93,10 @@ let testPlayer1 = $ref(
   )
 );
 
-let testDealer = new Dealer(
+let playerCards = $computed(() => testPlayer1.cards);
+
+let testDealer = $ref(
+  new Dealer(
   "Dealer",
   5,
   1,
@@ -96,7 +105,9 @@ let testDealer = new Dealer(
   0,
   GameStatus.standby,
   CardsStatus.none
-);
+));
+
+let dealerCards = $computed(() => testDealer.cards);
 
 const playerControl = new PlayerController();
 
@@ -105,21 +116,18 @@ const playerControl = new PlayerController();
 
 let cardsStyle: string = $ref("");
 
-onMounted(()=>{
-  if (testPlayer1.gameStatus === GameStatus.standby){
-    setTimeout(()=>{
-      playerControl.newRound(testPlayer1,testDealer)
-    },1000)
-    ;
+onMounted(() => {
+  if (testPlayer1.gameStatus === GameStatus.standby) {
+  
+      playerControl.newRound(testPlayer1, testDealer);
+
   }
 
-    
-})
-
+});
 
 watch(testPlayer1, () => {
   if (testPlayer1.gameStatus === GameStatus.standby)
-    playerControl.newRound(testPlayer1,testDealer);
+    playerControl.newRound(testPlayer1, testDealer);
 
   if (testPlayer1.points > 21) testPlayer1.cardsStatus = 4;
 
@@ -146,21 +154,10 @@ watch(testPlayer1, () => {
   console.log(cardsStyle);
 });
 
-// function getStyleString(player: Player) {
-//   if (player.gameStatus.isBlackJack) cardsStyle += "isBlackJack ";
-//   if (player.gameStatus.isBust) cardsStyle += "isBust ";
-//   if (player.gameStatus.isDoubledown) cardsStyle += "isDoubledown ";
-//   if (player.gameStatus.isStand) cardsStyle += "isStand ";
-//   // console.log(cardsStyle);
-//   return cardsStyle;
-// }
 
 function hit(): void {
   playerControl.hit(testPlayer1);
-  // getStyleString(testPlayer1);
-  console.log(testPlayer1);
-  // console.log(testPlayer1.gameStatus.isStand);
-  // cardsStyle(testPlayer1);
+  console.log(dealerCards)//沒吃到
 }
 
 function stand(): void {
@@ -181,18 +178,6 @@ let buttons = [
   { name: "DOUBLE DOWN", method: doubleDown },
   { name: "SPLIT", method: split }
 ];
-
-//しばらくはnew Cardで対応
-// let testCards = [
-//   new Card("hearts", 6, false, false, 6),
-//   new Card("diamonds", 9, false, false, 9),
-//   new Card("spades", 1, false, false, 1),
-//   new Card("diamonds", 5, false, false, 5),
-//   new Card("clubs", 6, false, false, 6)
-// ];
-
-//表示できなくなってる；；
-let testCards = $computed(() => testPlayer1.cards);
 </script>
 <style scoped>
 .cards {
@@ -258,28 +243,28 @@ let testCards = $computed(() => testPlayer1.cards);
   width: 48px;
   height: 48px;
   animation: play steps(5) 2s infinite;
-  background-image: url("../../../public/assets/coins/MonedaD_Big.png");
+  background-image: url("../../../assets/coins/MonedaD_Big.png");
 }
 
 .betImg {
   width: 48px;
   height: 48px;
   animation: play steps(5) 2s infinite;
-  background-image: url("../../../public/assets/coins/MonedaP_Big.png");
+  background-image: url("../../../assets/coins/MonedaP_Big.png");
 }
 
 .playerImg {
   width: 48px;
   height: 48px;
   animation: player-play steps(4) 2s infinite;
-  background-image: url("../../../public/assets/coins/spr_coin_strip4_Big.png");
+  background-image: url("../../../assets/coins/spr_coin_strip4_Big.png");
 }
 
 .pointImg {
   width: 48px;
   height: 48px;
   animation: play steps(5) 2s infinite;
-  background-image: url("../../../public/assets/coins/MonedaR_Big.png");
+  background-image: url("../../../assets/coins/MonedaR_Big.png");
 }
 
 @keyframes play {
