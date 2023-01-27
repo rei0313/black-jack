@@ -11,6 +11,10 @@ export class PlayerController {
     // private cardDao!: CardDao;
     private cardPool = new CardPoolController;
 
+    private timeout(ms: number) {
+        return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
     private getRandom(x: number): number {
         return Math.floor(Math.random() * x) + 1;
     };
@@ -39,7 +43,7 @@ export class PlayerController {
 
     //new card のポイントの初期値は0なので、ポイントを付与する
     private getNewCardPoints(card: Card): Card {
-        if (card.number == 1 || card.number == 11 || card.number == 12 || card.number == 13) {
+        if (card.number === 1 || card.number === 11 || card.number === 12 || card.number === 13) {
             card.point = 10;
         } else {
             card.point = card.number;
@@ -55,18 +59,29 @@ export class PlayerController {
         return newCard;
     };
 
-    private countPoints(player: Player): void {
-        let points = player.cards.reduce((accumulator, currentValue) =>
-            accumulator + currentValue.point, 0
-        );
-        player.points = points;
-    }
-
     //==========private method above, public method below(still under modifying)=============
 
 
+    public countPoints(player: Player): void {
+        let points = player.cards.reduce((accumulator, currentValue) =>
+            accumulator + currentValue.point, 0
+        );
 
-    public hit(player: Player): void {  //can Dealer input here...?
+        if (points > 21) {
+            player.cards.forEach((e) => {
+                if (e.number === 1) {
+                    e.point = 1;
+                }
+            })
+        }
+
+        player.points = points;
+    }
+
+
+
+
+    public hit(player: Player | Dealer): void {  //can Dealer input here...?
         //残るカードのデータをゲット→ランダムで一枚のカードを作成
         //1~13 & 4symbol random->if existed, new another card
         //isHited=false一旦残し、アニメーションの様子を見ながら調整
@@ -85,13 +100,36 @@ export class PlayerController {
         this.countPoints(player);
     }
 
-    public stand(player: Player): void {
-        //不用新增Card的properties，用player狀態操作<div>OneCards<div/>的class
-        //視情況再包一層components
+    public async stand(player: Player, dealer: Dealer): Promise<void> {
         player.cardsStatus = CardsStatus.isStand;
+
+        while (dealer.points < 17) {
+
+            this.hit(dealer);
+            await this.timeout(500);
+        }
+
+        if (dealer.points <= 21) {
+            if (dealer.points > player.points) {
+                dealer.gameStatus = GameStatus.win;
+                player.gameStatus = GameStatus.lose;
+            } else if (dealer.points < player.points) {
+                dealer.gameStatus = GameStatus.lose;
+                player.gameStatus = GameStatus.win;
+            } else if (dealer.points > 21) {
+                dealer.gameStatus = GameStatus.lose;
+                player.gameStatus = GameStatus.win;
+            } else {
+                dealer.gameStatus = GameStatus.tie;
+                player.gameStatus = GameStatus.tie;
+            }
+
+        } else {
+            dealer.gameStatus = GameStatus.lose;
+            player.gameStatus = GameStatus.win;
+        }
+
     }
-
-
     // 若閒家首兩張牌點數之和為11點，可以選擇加倍投注，但加注後僅獲發1張牌
     // 還沒做牌的判定!!
     public doubleDown(player: Player): void {
@@ -109,7 +147,12 @@ export class PlayerController {
         //發牌時間差？
         //set player hand money to 1
         player.cardsStatus = CardsStatus.none;
-        player.gameStatus= GameStatus.playing;
+        player.gameStatus = GameStatus.standby;
+        dealer.cardsStatus = CardsStatus.none;
+        dealer.gameStatus = GameStatus.standby;
+        // player.gameStatus = GameStatus.playing;
+        // dealer.gameStatus = GameStatus.playing;
+
         // setTimeout(()=>{player.cards.push(this.getNewCard())},1000);
         // setTimeout(()=>{dealer.cards.push(this.getNewCard())},1500);
         // setTimeout(()=>{player.cards.push(this.getNewCard())},2000);
