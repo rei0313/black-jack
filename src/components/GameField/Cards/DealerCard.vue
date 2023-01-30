@@ -8,16 +8,14 @@ import { Card } from "../../../model/Card";
 import { defineProps } from "vue";
 
 defineProps<{ dealercard: Card }>()
-// const props = defineProps({ card: Card });
-
-// function check(){
-//   console.log(card);
-// }
 
 
 </script>
 
 <style scoped>
+
+
+
 
 .oneCard img {
   width: 100%;

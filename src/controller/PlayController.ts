@@ -62,11 +62,12 @@ export class PlayerController {
     //==========private method above, public method below(still under modifying)=============
 
 
-    public countPoints(player: Player): void {
+    public countPoints(player: Player | Dealer): void {
         let points = player.cards.reduce((accumulator, currentValue) =>
             accumulator + currentValue.point, 0
         );
 
+        //如果有Ace且超過21點，則讓Ace=1點
         if (points > 21) {
             player.cards.forEach((e) => {
                 if (e.number === 1) {
@@ -78,6 +79,50 @@ export class PlayerController {
         player.points = points;
     }
 
+    //純粹更改狀態，用endround計算賭注
+    public check(player: Player, dealer: Dealer): void {
+        //先計算點數
+        this.countPoints(player);
+        this.countPoints(dealer);
+
+        if (player.points > 21) {
+            player.cardsStatus = CardsStatus.isBust;
+            player.gameStatus = GameStatus.lose;
+            dealer.gameStatus = GameStatus.win;
+        }
+
+        if (player.points === 21) {
+            player.cardsStatus = CardsStatus.isBlackJack;
+            this.timeout(2000);
+            player.gameStatus = GameStatus.blackjack;
+        }
+
+        //小於21沒有stand或doubledown，就什麼都不做
+
+        if (player.cardsStatus == CardsStatus.isStand || player.cardsStatus == CardsStatus.isDoubledown) {
+            if (dealer.points <= 21) {
+                if (dealer.points > player.points) {
+                    dealer.gameStatus = GameStatus.win;
+                    player.gameStatus = GameStatus.lose;
+                } else if (dealer.points < player.points) {
+                    dealer.gameStatus = GameStatus.lose;
+                    player.gameStatus = GameStatus.win;
+                } else if (dealer.points > 21) {
+                    dealer.gameStatus = GameStatus.lose;
+                    player.gameStatus = GameStatus.win;
+                } else {
+                    dealer.gameStatus = GameStatus.tie;
+                    player.gameStatus = GameStatus.tie;
+                }
+
+            } else {
+                dealer.gameStatus = GameStatus.lose;
+                player.gameStatus = GameStatus.win;
+            }
+        }
+
+    }
+
 
 
 
@@ -86,7 +131,6 @@ export class PlayerController {
         //1~13 & 4symbol random->if existed, new another card
         //isHited=false一旦残し、アニメーションの様子を見ながら調整
         let lastedCards: Card[] = this.cardPool.getLastedCards();
-        // let lastedCards: Card[] = [new Card("hearts", 6, false, false, 6), new Card("diamonds", 2, false, false, 2)]
         let newCard = this.getNewCard();
 
         for (let i = 0; i < lastedCards.length; i++) {
@@ -97,105 +141,59 @@ export class PlayerController {
         }
         //give a new card to the player
         player.cards.push(newCard);
-        this.countPoints(player);
     }
 
     public async stand(player: Player, dealer: Dealer): Promise<void> {
-        player.cardsStatus = CardsStatus.isStand;
+        
+        if(player.cardsStatus!==CardsStatus.isDoubledown){
+            player.cardsStatus = CardsStatus.isStand;
+        }
+        
 
         while (dealer.points < 17) {
-
             this.hit(dealer);
             await this.timeout(500);
+            this.countPoints(dealer);
         }
 
-        if (dealer.points <= 21) {
-            if (dealer.points > player.points) {
-                dealer.gameStatus = GameStatus.win;
-                player.gameStatus = GameStatus.lose;
-            } else if (dealer.points < player.points) {
-                dealer.gameStatus = GameStatus.lose;
-                player.gameStatus = GameStatus.win;
-            } else if (dealer.points > 21) {
-                dealer.gameStatus = GameStatus.lose;
-                player.gameStatus = GameStatus.win;
-            } else {
-                dealer.gameStatus = GameStatus.tie;
-                player.gameStatus = GameStatus.tie;
-            }
-
-        } else {
-            dealer.gameStatus = GameStatus.lose;
-            player.gameStatus = GameStatus.win;
-        }
+        // this.check(player, dealer);
 
     }
     // 若閒家首兩張牌點數之和為11點，可以選擇加倍投注，但加注後僅獲發1張牌
     // 還沒做牌的判定!!
-    public doubleDown(player: Player): void {
+    public doubleDown(player: Player,dealer:Dealer): void {
         player.handMoney = player.handMoney * 2;    //double moner
         this.hit(player);   //add a new card
-        player.cardsStatus = 2;
+        this.stand(player,dealer);
+        player.cardsStatus = CardsStatus.isDoubledown;
         //recount point
-        this.countPoints(player);
+        // this.countPoints(player);
 
     }
 
     public newRound(player: Player, dealer: Dealer): void {
-        //重複卡牌是否需要判斷？被ったかどうかを判定？
-        //之後記得精簡寫法...這樣好醜
-        //發牌時間差？
-        //set player hand money to 1
-        player.cardsStatus = CardsStatus.none;
-        player.gameStatus = GameStatus.standby;
-        dealer.cardsStatus = CardsStatus.none;
-        dealer.gameStatus = GameStatus.standby;
-        // player.gameStatus = GameStatus.playing;
-        // dealer.gameStatus = GameStatus.playing;
 
-        // setTimeout(()=>{player.cards.push(this.getNewCard())},1000);
-        // setTimeout(()=>{dealer.cards.push(this.getNewCard())},1500);
-        // setTimeout(()=>{player.cards.push(this.getNewCard())},2000);
-        // setTimeout(()=>{dealer.cards.push(this.getNewCard())},2500);
+        player.cards = [];
+        dealer.cards = [];
+        player.cardsStatus = CardsStatus.none;
+        player.gameStatus = GameStatus.playing;
+        dealer.cardsStatus = CardsStatus.none;
+        dealer.gameStatus = GameStatus.playing;
 
         player.cards = [this.getNewCard(), this.getNewCard()];
         dealer.cards = [this.getNewCard(), this.getNewCard()];
         this.countPoints(player);
         this.countPoints(dealer);
         player.handMoney = 1;
-        player.allMoney - 1;
+        player.allMoney = player.allMoney - 1;
         dealer.handMoney = 1;
-        dealer.handMoney - 1;
+        dealer.handMoney = dealer.handMoney - 1;
 
-
-
-    }
-
-    //if card==A , it might count as 1 or 10(default 10)
-    public changeAce(card: Card, player: Player): void {
-        if (card.number === 1) {
-            if (card.point === 10) {
-                card.point = 1;
-            } else {
-                card.point = 10;
-            }
-        }
-        this.countPoints(player);
     }
 
 
 
     public endRound(player: Player, dealer: Dealer): void {
-        //如果沒有bust或blackjack
-        if (player.cardsStatus === CardsStatus.none) {
-            if (player.points > dealer.points) {
-                player.gameStatus = GameStatus.win;
-            } else {
-                player.gameStatus = GameStatus.lose;
-            }
-        } else {
-            console.log('Logical ERROR !!  PlayerController')
-        }
 
         if (player.gameStatus == GameStatus.win) {
             //get dealer's handmoney
@@ -205,33 +203,42 @@ export class PlayerController {
             //lose all handmoney
             dealer.handMoney = player.handMoney + dealer.handMoney;
             player.handMoney = 0;
+        } else if (player.gameStatus == GameStatus.tie) {
+            console.log('tie')
         } else {
-            console.log('Logical erroe!! PlayerController')
+            //standby
+            console.log('check but nothing happended')
         }
 
         //add hand money to all money
         player.allMoney = player.allMoney + player.handMoney;
         dealer.allMoney = dealer.allMoney + dealer.handMoney;
 
-        player.gameStatus = GameStatus.standby;
-        //check points bigger or smaller
-        //change status "win" or "lose"
-        //give or take player's all money
     }
 
-    public isBust(player: Player): void {
-        this.countPoints(player);
-        if (player.points > 21) {
-            player.cardsStatus = CardsStatus.isBust;
-        }
-    };
-
-    public isBlackJack(player: Player): void {
-        this.countPoints(player);
-        if (player.points == 21) {
-            player.cardsStatus = CardsStatus.isBlackJack;
-        }
+    public setPlaying(player: Player, dealer: Dealer): void {
+        player.gameStatus = GameStatus.playing;
+        dealer.gameStatus = GameStatus.playing;
     }
+
+    // public clearCardStyle(player: Player, dealer: Dealer): void {
+    //     player.cardsStatus = CardsStatus.none;
+    //     dealer.cardsStatus = CardsStatus.none;
+    // }
+
+    // public isBust(player: Player): void {
+    //     this.countPoints(player);
+    //     if (player.points > 21) {
+    //         player.cardsStatus = CardsStatus.isBust;
+    //     }
+    // };
+
+    // public isBlackJack(player: Player): void {
+    //     this.countPoints(player);
+    //     if (player.points == 21) {
+    //         player.cardsStatus = CardsStatus.isBlackJack;
+    //     }
+    // }
 
 
 

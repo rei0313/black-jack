@@ -1,11 +1,17 @@
 <template>
   <div class="background">
+    <div class="menuBlock" @click="toMenu">
+      <div class="icon"></div>
+      <div class="icontitle">BACK TO HOME</div>
+    </div>
     <div class="cards">
-      <div>
-        <DealerCardF :dealercardF="dealerFirstCard" />
-      </div>
-      <div v-for="dealercard in dealerCards" :key="dealercard.imgPath">
-        <DealerCard :dealercard="dealercard" />
+      <div v-for="dealercard in dealerCards" :key="dealercard.imgPath" class="dealercards">
+        <div class="back">
+          <img src="../../../public/assets/Cards/back.png" class="oneCard" />
+        </div>
+        <div class="font">
+          <DealerCard :dealercard="dealercard" />
+        </div>
       </div>
     </div>
     <div v-if="testPlayer1.cardsStatus==CardsStatus.isBust" class="statuBox">
@@ -31,7 +37,7 @@
       <span>STAND...</span>
     </div>
     <div v-if="testPlayer1.cardsStatus==CardsStatus.isDoubledown" class="statuBox">
-      <span>DOUBLE DOWN</span>
+      <span style="font-size: 40px">DOUBLE DOWN</span>
     </div>
     <div v-if="testPlayer1.cardsStatus==CardsStatus.isBlackJack" class="blackjack">
       <span>BLACK JACK!!</span>
@@ -71,19 +77,18 @@
         <div class="subNumber">{{testPlayer1.name}}</div>
       </div>
     </div>
-    <video autoplay muted loop id="backgroundVedio">
+    <!-- <video autoplay muted loop id="backgroundVedio">
       <source
         src="../../../assets/Free Animation Loop Background_ Pixel Blocks.mp4"
         type="video/mp4"
       />
-    </video>
+    </video>-->
   </div>
 </template>
 <script setup lang="ts">
 import { Card } from "../../model/Card";
 import OneCard from "./Cards/OneCard.vue"; //dont delete
 import DealerCard from "./Cards/DealerCard.vue";
-import DealerCardF from "./Cards/DealerCardF.vue";
 import { addDoc, Timestamp, collection } from "firebase/firestore";
 import { db } from "../../firebase";
 import { PlayerController } from "../../controller/PlayController";
@@ -92,13 +97,18 @@ import { GameStatus } from "../../model/GameStatus";
 import { onMounted, watch } from "vue";
 import { CardsStatus } from "../../model/CardsStatus";
 import { Dealer } from "../../model/Dealer";
+import router from "../../../router";
 
 /*issue of this file:
 1. 新回合開始時，不允許點擊所有東西
 */
 
-function timeout(ms: number) {
-  return new Promise(resolve => setTimeout(resolve, ms));
+// function timeout(ms: number) {
+//   return new Promise(resolve => setTimeout(resolve, ms));
+// }
+
+function toMenu() {
+  router.push({ path: "/" });
 }
 
 let testPlayer1 = $ref(
@@ -120,52 +130,23 @@ let testDealer = $ref(
   new Dealer("Dealer", 5, 1, 100, [], 0, GameStatus.standby, CardsStatus.none)
 );
 
-let dealerFirstCard = $ref(testDealer.cards[0]);
 //不知道為什麼不這樣寫會噴出一堆div
-let dealerCards = $computed(() => {
-  let temp: any[] = [];
-  for (let i = 0; i < testDealer.cards.length; i++) {
-    if (i > 0) {
-      temp.push(testDealer.cards[i]);
-    }
-  }
-  return temp;
-});
+let dealerCards = $computed(() => testDealer.cards);
 
 const playerControl = new PlayerController();
 
-//compute this function!!
-//using boolean is easier to build the game logic, but here I want to get string for dynamic class...
-
 let cardsStyle: string = $ref("");
 let alertVisable = $ref(false);
-function exit() {
-  alertVisable = false;
-  console.log(alertVisable);
-}
+
 
 onMounted(() => {
   if (testPlayer1.gameStatus === GameStatus.standby) {
-    playerControl.newRound(testPlayer1, testDealer);  //更改Ace的點數從10至1，仍在測試中
+    playerControl.newRound(testPlayer1, testDealer); 
     alertVisable = false;
   }
 });
 
 watch(testPlayer1, () => {
-  if (testPlayer1.points > 21) {
-    playerControl.countPoints(testPlayer1);
-    testPlayer1.cardsStatus = CardsStatus.isBust;
-    testPlayer1.gameStatus = GameStatus.lose;
-    testDealer.gameStatus = GameStatus.win;
-    alertVisable = true;
-  }
-
-  if (testPlayer1.points === 21) {
-    testPlayer1.cardsStatus = CardsStatus.isBlackJack;
-    timeout(2000);
-    testPlayer1.gameStatus = GameStatus.blackjack;
-  }
-
   if (
     testPlayer1.cardsStatus == CardsStatus.isBlackJack &&
     !cardsStyle.includes("win")
@@ -185,12 +166,10 @@ watch(testPlayer1, () => {
     testPlayer1.cardsStatus == CardsStatus.isStand &&
     !cardsStyle.includes("isStand")
   ) {
-    // cardsStyle = "isStand ";
-    // 按下stand的瞬間就呼叫stand()了這裡不用動
   }
 
   if (testPlayer1.cardsStatus == CardsStatus.none) cardsStyle = "";
-  if (testPlayer1.gameStatus !== GameStatus.standby) {
+  if (testPlayer1.gameStatus !== GameStatus.standby && testPlayer1.gameStatus !== GameStatus.playing) {
     alertVisable = true;
     switch (testPlayer1.gameStatus) {
       case "win":
@@ -204,46 +183,45 @@ watch(testPlayer1, () => {
         break;
     }
   }
-  // if (testPlayer1.gameStatus == GameStatus.win) {
-  //   cardsStyle = "win";
-  //   alertVisable = true;
-  // }
-  // if(testPlayer1.gameStatus == GameStatus.tie){
-  //   cardsStyle = "tie";
-  //   alertVisable = true;
-  // }
-  console.log(testDealer.points);
-  console.log(testPlayer1.points);
+
 });
 
 function hit(): void {
   playerControl.hit(testPlayer1);
-  console.log(dealerCards); //沒吃到
+  playerControl.check(testPlayer1, testDealer);
+  playerControl.endRound(testPlayer1,testDealer);
+  console.log(testDealer.points);
+  console.log(testPlayer1.points);
 }
 
 function stand(): void {
   playerControl.stand(testPlayer1, testDealer);
-
+  playerControl.check(testPlayer1, testDealer);
+  playerControl.endRound(testPlayer1,testDealer);
   console.log(testDealer.gameStatus);
   console.log(testPlayer1.gameStatus);
-  // console.log(cardsStyle);
+
 }
 
 function doubleDown(): void {
-  playerControl.doubleDown(testPlayer1);
+  playerControl.doubleDown(testPlayer1, testDealer);
+  playerControl.check(testPlayer1, testDealer);
+  playerControl.endRound(testPlayer1,testDealer);
   console.log(testPlayer1);
 }
 
 function split(): void {}
 
 function newRound() {
-  playerControl.newRound(testPlayer1, testDealer);
-  console.log(testPlayer1);
-  console.log(testDealer);
   alertVisable = false;
+  playerControl.newRound(testPlayer1, testDealer);
 }
 
-//===========temp above
+function exit(){
+  alertVisable = false;
+  playerControl.setPlaying(testPlayer1,testDealer);
+}
+
 let buttons = [
   { name: "HIT", method: hit },
   { name: "STAND", method: stand },
@@ -588,5 +566,60 @@ let buttons = [
   100% {
     transform: translateX(-3px);
   }
+}
+.oneCard {
+  display: inline-block;
+  justify-content: center;
+  align-items: center;
+  margin: 30px;
+  width: 200px;
+  box-shadow: 8px 8px 15px rgba(0, 0, 0, 0.616);
+}
+
+.dealercards {
+  display: flex;
+  transform-style: preserve-3d;
+  position: relative;
+}
+
+.font:hover {
+  transform: rotateY(180deg);
+}
+.back:hover {
+  transform: rotateY(0deg);
+}
+
+.back:first-child {
+  backface-visibility: hidden;
+  position: absolute;
+  transform: rotateY(180deg);
+  transition: all 500ms ease;
+}
+
+.font:first-child {
+  position: absolute;
+  backface-visibility: hidden;
+  transform: rotateY(0deg);
+  backface-visibility: hidden;
+  transition: all 500ms ease;
+}
+
+.menuBlock {
+  align-items: center;
+  cursor: pointer;
+  display: flex;
+  margin: 15px;
+}
+
+.icon {
+  margin-right: 20px;
+  height: 32px;
+  width: 32px;
+  background-image: url("../../public/assets/UI/tile443.png");
+}
+
+.icontitle {
+  font-size: 20px;
+  color: rgb(250, 213, 92);
 }
 </style>
