@@ -15,14 +15,14 @@
           </div>
         </div>
       </div>
-      <div v-if="testPlayer1.cardsStatus==CardsStatus.isBust" class="statuBox">
+      <div v-if="data.player.cardsStatus==CardsStatus.isBust" class="statuBox">
         <span>BUST !</span>
       </div>
       <div v-if="alertVisable==true" class="alertBox">
-        <div class="alertTitle" v-if="testPlayer1.gameStatus==GameStatus.lose">Ooops!! You lose!!</div>
-        <div class="alertTitle" v-if="testPlayer1.gameStatus==GameStatus.win">Congrats!! You win!!</div>
-        <div class="alertTitle" v-if="testPlayer1.gameStatus==GameStatus.tie">Tie...</div>
-        <div class="alertTitle" v-if="testPlayer1.gameStatus==GameStatus.blackjack">It's BLACKJACK!!</div>
+        <div class="alertTitle" v-if="data.player.gameStatus==GameStatus.lose">Ooops!! You lose!!</div>
+        <div class="alertTitle" v-if="data.player.gameStatus==GameStatus.win">Congrats!! You win!!</div>
+        <div class="alertTitle" v-if="data.player.gameStatus==GameStatus.tie">Tie...</div>
+        <div class="alertTitle" v-if="data.player.gameStatus==GameStatus.blackjack">It's BLACKJACK!!</div>
         <div class="btnwrap">
           <div class="newRoundBtn" @click="newRound">
             <div class="btnLi"></div>
@@ -34,13 +34,13 @@
           </div>
         </div>
       </div>
-      <div v-if="testPlayer1.cardsStatus==CardsStatus.isStand" class="statuBox">
+      <div v-if="data.player.cardsStatus==CardsStatus.isStand" class="statuBox">
         <span>STAND...</span>
       </div>
-      <div v-if="testPlayer1.cardsStatus==CardsStatus.isDoubledown" class="statuBox">
+      <div v-if="data.player.cardsStatus==CardsStatus.isDoubledown" class="statuBox">
         <span style="font-size: 40px">DOUBLE DOWN</span>
       </div>
-      <div v-if="testPlayer1.cardsStatus==CardsStatus.isBlackJack" class="blackjack">
+      <div v-if="data.player.cardsStatus==CardsStatus.isBlackJack" class="blackjack">
         <span>BLACK JACK!!</span>
       </div>
       <div class="cards" :class="cardsStyle">
@@ -59,24 +59,24 @@
       <div class="bet">
         <div class="betImg"></div>
         <div class="subtitle">BET MONEY:</div>
-        <div class="subNumber">{{ testPlayer1.handMoney }}</div>
+        <div class="subNumber">{{ data.player.handMoney }}</div>
       </div>
       <div class="money">
         <div class="moneyImg"></div>
         <div class="subtitle">HAND MONEY:</div>
-        <div class="subNumber">{{testPlayer1.allMoney}}</div>
+        <div class="subNumber">{{data.player.allMoney}}</div>
       </div>
       <div class="point">
         <div class="pointImg"></div>
         <div class="subtitle">POINT:</div>
-        <div class="subNumber">{{testPlayer1.points}}</div>
+        <div class="subNumber">{{data.player.points}}</div>
       </div>
     </div>
     <div class="playerStatus">
       <div class="playerData">
         <div class="playerImg"></div>
         <div class="subtitle">PLAYER NAME:</div>
-        <div class="subNumber">{{testPlayer1.name}}</div>
+        <div class="subNumber">{{data.player.name}}</div>
       </div>
     </div>
   </div>
@@ -85,15 +85,23 @@
 import { Card } from "../../model/Card";
 import OneCard from "./Cards/OneCard.vue"; //dont delete
 import DealerCard from "./Cards/DealerCard.vue";
-import { addDoc, Timestamp, collection } from "firebase/firestore";
+import {
+  addDoc,
+  Timestamp,
+  collection,
+  query,
+  where,
+  getDocs
+} from "firebase/firestore";
 import { db } from "../../firebase";
 import { PlayerController } from "../../controller/PlayController";
 import { Player } from "../../model/Player";
 import { GameStatus } from "../../model/GameStatus";
-import { defineProps, onMounted, watch } from "vue";
+import { defineProps, onMounted, watch, reactive } from "vue";
 import { CardsStatus } from "../../model/CardsStatus";
 import { Dealer } from "../../model/Dealer";
 import router from "../../../router";
+import { getAuth } from "firebase/auth";
 
 // let playername = this.$route.params.playername;
 
@@ -101,28 +109,24 @@ import router from "../../../router";
 1. 新回合開始時，不允許點擊所有東西
 */
 
-// function timeout(ms: number) {
-//   return new Promise(resolve => setTimeout(resolve, ms));
-// }
+//get current user
 
 function toMenu() {
   router.push({ path: "/" });
 }
 
-let testPlayer1 = $ref(
-  new Player(
-    "MurabitoB",
-    10001,
-    1,
-    200,
-    [],
-    0,
-    GameStatus.standby,
-    CardsStatus.none
-  )
-);
-
-let playerCards = $computed(() => testPlayer1.cards);
+// let player = $ref(
+//   new Player(
+//     "MurabitoB",
+//     10001,
+//     1,
+//     200,
+//     [],
+//     0,
+//     GameStatus.standby,
+//     CardsStatus.none
+//   )
+// );
 
 let testDealer = $ref(
   new Dealer("Dealer", 5, 1, 100, [], 0, GameStatus.standby, CardsStatus.none)
@@ -135,59 +139,78 @@ const playerControl = new PlayerController();
 
 let cardsStyle: string = $ref("");
 let alertVisable = $ref(false);
+// let player: Player = reactive(
+//   new Player("temp", 0, 0, 0, [], 0, GameStatus.standby, CardsStatus.none)
+// ) as Player;
 
-onMounted(() => {
+const data = reactive({
+  player: new Player(
+    "temp",
+    0,
+    0,
+    0,
+    [],
+    0,
+    GameStatus.standby,
+    CardsStatus.none
+  )
+}) as { player: Player };
+
+onMounted(async () => {
   //=======firebase:getting player data===========
-  // console.log(playername)
 
+  const auth = getAuth();
+  const user = auth.currentUser;
+  console.log('onMounted:  ' + user);
 
+  if (user) {
+    const q = query(collection(db, "player"), where("id", "==", user.uid));
+    // console.log('check user');
+    const querySnapshot = await getDocs(q);
+    // console.log(querySnapshot);
+    querySnapshot.forEach(doc => {
+      data.player = doc.data() as Player;
+    });
+  } else {
+    //要改寫
+    alert("not login");
+    router.push("/");
+  }
 
-
-
-
-
-
-
-
-
-
-
-
-  if (testPlayer1.gameStatus === GameStatus.standby) {
-    playerControl.newRound(testPlayer1, testDealer);
+  if (data.player.gameStatus === GameStatus.standby) {
+    playerControl.newRound(data.player, testDealer);
     alertVisable = false;
   }
 });
 
-watch(testPlayer1, () => {
+let playerCards = $computed(() => data.player.cards);
+
+watch(data.player, () => {
   if (
-    testPlayer1.cardsStatus == CardsStatus.isBlackJack &&
+    data.player.cardsStatus == CardsStatus.isBlackJack &&
     !cardsStyle.includes("win")
   )
     cardsStyle = "win ";
-  if (
-    testPlayer1.cardsStatus == CardsStatus.isBust &&
-    !cardsStyle.includes("lose")
-  )
+  if (data.player.cardsStatus == CardsStatus.isBust && !cardsStyle.includes("lose"))
     cardsStyle = "lose ";
   if (
-    testPlayer1.cardsStatus == CardsStatus.isDoubledown &&
+    data.player.cardsStatus == CardsStatus.isDoubledown &&
     !cardsStyle.includes("isDoubledown")
   )
     cardsStyle = "isDoubledown ";
   if (
-    testPlayer1.cardsStatus == CardsStatus.isStand &&
+    data.player.cardsStatus == CardsStatus.isStand &&
     !cardsStyle.includes("isStand")
   ) {
   }
 
-  if (testPlayer1.cardsStatus == CardsStatus.none) cardsStyle = "";
+  if (data.player.cardsStatus == CardsStatus.none) cardsStyle = "";
   if (
-    testPlayer1.gameStatus !== GameStatus.standby &&
-    testPlayer1.gameStatus !== GameStatus.playing
+    data.player.gameStatus !== GameStatus.standby &&
+    data.player.gameStatus !== GameStatus.playing
   ) {
     alertVisable = true;
-    switch (testPlayer1.gameStatus) {
+    switch (data.player.gameStatus) {
       case "win":
         cardsStyle = "win";
         break;
@@ -202,44 +225,44 @@ watch(testPlayer1, () => {
 });
 
 function hit(): void {
-  playerControl.hit(testPlayer1);
-  playerControl.check(testPlayer1, testDealer);
-  playerControl.endRound(testPlayer1, testDealer);
-  console.log(testDealer.points);
-  console.log(testPlayer1.points);
+  playerControl.hit(data.player);
+  playerControl.check(data.player, testDealer);
+  playerControl.endRound(data.player, testDealer);
+  // console.log(testDealer.points);
+  const auth = getAuth();
+  const user = auth.currentUser;
+  console.log(user);
 }
 
 function stand(): void {
-  playerControl.stand(testPlayer1, testDealer);
-  playerControl.check(testPlayer1, testDealer);
-  playerControl.endRound(testPlayer1, testDealer);
+  playerControl.stand(data.player, testDealer);
+  playerControl.check(data.player, testDealer);
+  playerControl.endRound(data.player, testDealer);
   console.log(testDealer.gameStatus);
-  console.log(testPlayer1.gameStatus);
+  console.log(data.player.gameStatus);
 }
 
 async function doubleDown(): Promise<void> {
-  await playerControl.doubleDown(testPlayer1, testDealer);
-  await playerControl.check(testPlayer1, testDealer);
-  playerControl.endRound(testPlayer1, testDealer);
-  console.log(testPlayer1);
+  await playerControl.doubleDown(data.player, testDealer);
+  await playerControl.check(data.player, testDealer);
+  playerControl.endRound(data.player, testDealer);
+  console.log(data.player);
 }
 
 function reset(): void {
-  playerControl.check(testPlayer1, testDealer);
-  playerControl.newRound(testPlayer1, testDealer);
-  playerControl.endRound(testPlayer1, testDealer);
+  playerControl.check(data.player, testDealer);
+  playerControl.newRound(data.player, testDealer);
+  playerControl.endRound(data.player, testDealer);
 }
 
 function newRound() {
   alertVisable = false;
-  playerControl.newRound(testPlayer1, testDealer);
-  
+  playerControl.newRound(data.player, testDealer);
 }
 
 function exit() {
   alertVisable = false;
-  playerControl.setPlaying(testPlayer1, testDealer);
-  
+  playerControl.setPlaying(data.player, testDealer);
 }
 
 let buttons = [

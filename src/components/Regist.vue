@@ -47,37 +47,19 @@ import {
   where,
   getDocs
 } from "firebase/firestore";
-import { db } from "../firebase";
-
+import { db,app } from "../firebase";
+import { getAuth, createUserWithEmailAndPassword } from "firebase/auth";
 //=========firebase==========
 
 async function submit() {
-  try {
-    const q = query(
-      collection(db, "loginData"),
-      where("name", "==", inputs[0].input)
-    );
-    //返回一個query
-    const querySnapshot = await getDocs(q);
-    let checker = null;
-    querySnapshot.forEach(doc => {
-      checker = doc.data();
-    });
-    console.log(checker);
-    if (checker) {
-      alert("已經被註冊過了");
-      return;
-    } else {
-      console.log("尚未被註冊");
-      const loginData = await addDoc(collection(db, "loginData"), {
+  const auth = getAuth(app);
+  createUserWithEmailAndPassword(auth, inputs[1].input, inputs[2].input)
+    .then(async userCredential => {
+      // Signed in
+      const user = userCredential.user;
+      const playerData = await setDoc(doc(db, "player",user.uid ), {
         name: inputs[0].input,
-        password: inputs[1].input,
-        status: "logout"
-      });
-
-      const playerData = await setDoc(doc(db, "player", loginData.id), {
-        name: inputs[0].input,
-        id: loginData.id,
+        id: user.uid,
         handMoney: 0,
         allMoney: 5,
         cards: null,
@@ -88,15 +70,62 @@ async function submit() {
 
       alert("註冊成功！用戶名：" + inputs[0].input);
       router.push({ path: "/" });
+
+    })
+    .catch(error => {
+      const errorCode = error.code;
+      const errorMessage = error.message;
+      // ..
+    });
+
+    
     }
-  } catch (e) {
-    console.error("Error adding document: ", e);
-  }
-}
+//   try {
+//     const q = query(
+//       collection(db, "loginData"),
+//       where("name", "==", inputs[0].input)
+//     );
+//     //返回一個query
+//     const querySnapshot = await getDocs(q);
+//     let checker = null;
+//     querySnapshot.forEach(doc => {
+//       checker = doc.data();
+//     });
+//     console.log(checker);
+//     if (checker) {
+//       alert("已經被註冊過了");
+//       return;
+//     } else {
+//       console.log("尚未被註冊");
+//       const loginData = await addDoc(collection(db, "loginData"), {
+//         name: inputs[0].input,
+//         password: inputs[1].input,
+//         status: "logout"
+//       });
+
+//       const playerData = await setDoc(doc(db, "player", loginData.id), {
+//         name: inputs[0].input,
+//         id: loginData.id,
+//         handMoney: 0,
+//         allMoney: 5,
+//         cards: null,
+//         points: 0,
+//         gameStatus: "standby",
+//         cardsStatus: "none"
+//       });
+
+//       alert("註冊成功！用戶名：" + inputs[0].input);
+//       router.push({ path: "/" });
+//     }
+//   } catch (e) {
+//     console.error("Error adding document: ", e);
+//   }
+// }
 
 //用兩個class，一個放圖片一個喬位置？
 const inputs = $ref([
   { name: "PLAYER NAME", icon: "name_icon", type: "text", input: "" },
+  { name: "EMAIL", icon: "email_icon", type: "text", input: "" },
   {
     name: "PASSWORD",
     icon: "password_icon",
@@ -112,7 +141,7 @@ const buttons = [
 ];
 
 function cancel() {
-  inputs.forEach((e: { input: string; }) => {
+  inputs.forEach((e: { input: string }) => {
     e.input = "";
   });
 }
@@ -215,6 +244,13 @@ function toMenu() {
   height: 32px;
   width: 32px;
   background-image: url("../../public/assets/UI/tile015.png");
+}
+
+.email_icon {
+  margin-right: 20px;
+  height: 32px;
+  width: 32px;
+  background-image: url("../../public/assets/UI/tile016.png");
 }
 
 /* 暫時先這樣，之後再改成hover父層 */

@@ -40,49 +40,64 @@ import {
   where,
   getDocs
 } from "firebase/firestore";
-import { db } from "../firebase";
+import { db, app } from "../firebase";
+import { getAuth, signInWithEmailAndPassword, signOut } from "firebase/auth";
 
 //=========firebase==========
 //確認登入後，用onMounted查完整玩家資料
-async function submit() {
-  try {
-    const q = query(
-      collection(db, "loginData"),
-      where("name", "==", inputs[0].input)
-    );
-    //返回一個query
-    const querySnapshot = await getDocs(q);
-    let checker = { name: "", password: "", status: "", id: "" };
-    querySnapshot.forEach(doc => {
-      checker.name = doc.data().name;
-      checker.password = doc.data().password;
-      checker.status = doc.data().status;
-      checker.id = doc.id;
-    });
-    // console.log(checker);
-    if (checker.password === inputs[1].input) {
-      //更改登入狀態，寫回firebase
-      //
-      const loginData = await setDoc(doc(db, "loginData", checker.id), {
-        //不全部寫出來會被覆蓋成空的QQ
-        name: inputs[0].input,
-        password: inputs[1].input,
-        status: "login"
-      });
 
-      alert("登入成功！");
-      router.push({ path: "/", params: { playername: checker.name } });
-      return;
-    } else {
-      alert("密碼錯誤┗|｀O′|┛");
-    }
-  } catch (e) {
-    console.error("Error adding document: ", e);
-  }
+async function submit() {
+  const auth = getAuth(app);
+  signInWithEmailAndPassword(auth, inputs[0].input, inputs[1].input)
+    .then(userCredential => {
+      // Signed in
+      const user = userCredential.user;
+      console.log(user);
+      // ...
+    })
+    .catch(error => {
+      const errorCode = error.code;
+      const errorMessage = error.message;
+    });
+
+  // try {
+  //   const q = query(
+  //     collection(db, "loginData"),
+  //     where("name", "==", inputs[0].input)
+  //   );
+  //   //返回一個query
+  //   const querySnapshot = await getDocs(q);
+  //   let checker = { name: "", password: "", status: "", id: "" };
+  //   querySnapshot.forEach(doc => {
+  //     checker.name = doc.data().name;
+  //     checker.password = doc.data().password;
+  //     checker.status = doc.data().status;
+  //     checker.id = doc.id;
+  //   });
+  //   // console.log(checker);
+  //   if (checker.password === inputs[1].input) {
+  //     //更改登入狀態，寫回firebase
+  //     //
+  //     const loginData = await setDoc(doc(db, "loginData", checker.id), {
+  //       //不全部寫出來會被覆蓋成空的QQ
+  //       name: inputs[0].input,
+  //       password: inputs[1].input,
+  //       status: "login"
+  //     });
+
+  //     alert("登入成功！");
+  //     router.push({ path: "/", params: { playername: checker.name } });
+  //     return;
+  //   } else {
+  //     alert("密碼錯誤┗|｀O′|┛");
+  //   }
+  // } catch (e) {
+  //   console.error("Error adding document: ", e);
+  // }
 }
 
 const inputs = $ref([
-  { name: "PLAYER NAME", icon: "name_icon", type: "text", input: "" },
+  { name: "EMAIL", icon: "name_icon", type: "text", input: "" },
   {
     name: "PASSWORD",
     icon: "password_icon",
@@ -94,17 +109,20 @@ const inputs = $ref([
 
 const buttons = [
   { name: "SUBMIT", method: submit },
-  { name: "CANCEL", method: cancel }
+  { name: "LOGOUT", method: cancel }
 ];
 
 function cancel() {
-  inputs.forEach((e: { input: string }) => {
-    e.input = "";
-  });
+  const auth = getAuth(app);
+  signOut(auth);
+
+  // inputs.forEach((e: { input: string }) => {
+  //   e.input = "";
+  // });
 }
 
 function toMenu() {
-  router.push({ path: "/" });
+  router.push("/");
 }
 </script>
 
