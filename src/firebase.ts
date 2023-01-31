@@ -19,6 +19,7 @@ const firebaseConfig = {
 };
 
 import { getAuth, onAuthStateChanged} from "firebase/auth";
+import { useUserStore,userMutation } from "./store/user";
 
 
 // Initialize Firebase
@@ -31,11 +32,14 @@ onAuthStateChanged(auth, (user) => {
     // User is signed in, see docs for a list of available properties
     // https://firebase.google.com/docs/reference/js/firebase.User
     const uid = user.uid;
+    userMutation.setUserId(uid);
+
     console.log('user login')
     // ...
   } else {
     // User is signed out
     // ...
+    userMutation.setUserId("");
     console.log('no user login')
   }
 });

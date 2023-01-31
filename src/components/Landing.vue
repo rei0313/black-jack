@@ -1,38 +1,72 @@
 
 
 <template>
-  
-    <div class="wrap">
-      <div class="blackjack">
-        <span>BLACK JACK</span>
-      </div>
-
-      <div class="menu">
-        <div class="menuBlock" v-for="li in menublocks" :key="li.name" @click="li.method">
-          <div :class="li.icon"></div>
-          <div class="subtitle">{{li.name}}</div>
-          <!-- <div class="player">{{ }}</div> -->
-          <!-- 做好player再補 -->
-        </div>
-      </div>
+  <div class="wrap">
+    <div class="blackjack">
+      <span>BLACK JACK</span>
     </div>
 
+    <div class="menu">
+      <div class="menuBlock" v-for="li in menublocks" :key="li.name" @click="li.method">
+        <div :class="li.icon"></div>
+        <div class="subtitle">{{li.name}}</div>
+      </div>
+      <div class="subtitle welcome">WELCOME!! {{data.player.name }}</div>
+    </div>
+  </div>
 </template>
     
 
 
 
 <script setup lang="ts">
+import { watch, reactive, onMounted } from "vue";
 import router from "../../router";
-
+import { Player } from "../model/Player";
+import { GameStatus } from "../model/GameStatus";
+import { CardsStatus } from "../model/CardsStatus";
+import { getAuth } from "firebase/auth";
+import { collection, getDocs, query, where } from "firebase/firestore";
+import { db } from "../firebase";
+import { setTimeout } from "timers/promises";
+import { useUserStore } from "../store/user";
 
 //=========Loading=========
+const userStore = useUserStore();
+const data = reactive({
+  player: new Player("", 0, 0, 0, [], 0, GameStatus.standby, CardsStatus.none)
+}) as { player: Player };
 
+onMounted(() => {
+  if (userStore.id) {
+    getUser();
+  } else {
+    console.log("something wrong");
+  }
+});
 
+async function getUser() {
+  const auth = getAuth();
+  const user = auth.currentUser;
+  console.log(user);
+  if (user) {
+    const q = query(collection(db, "player"), where("id", "==", user.uid));
+    // console.log('check user');
+    const querySnapshot = await getDocs(q);
+    // console.log(querySnapshot);
+    querySnapshot.forEach(doc => {
+      data.player = doc.data() as Player;
+    });
+  }
+}
 
-
-
-
+watch(
+  userStore,
+  async () => {
+    getUser();
+  },
+  { deep: true }
+);
 
 //用兩個class，一個放圖片一個喬位置？
 const menublocks = [
@@ -43,17 +77,17 @@ const menublocks = [
 ];
 
 function toLogin() {
-  router.push({ path: "/login" });
+  router.push("/login");
 }
 
 function toPlay() {
-  router.push({ path: "/game" });
+  router.push("/game");
 }
 function toRankingBoard() {
-  router.push({ path: "/rank" });
+  router.push("/rank");
 }
 function toRegist() {
-  router.push({ path: "/regist" });
+  router.push("/regist");
 }
 </script>
 

@@ -177,7 +177,9 @@ export class PlayerController {
     // 若閒家首兩張牌點數之和為11點，可以選擇加倍投注，但加注後僅獲發1張牌
     // 還沒做牌的判定!!
     public async doubleDown(player: Player, dealer: Dealer): Promise<void> {
-        player.handMoney = player.handMoney * 2;    //double moner
+        player.handMoney = 2;
+        player.allMoney = player.allMoney - 1;
+        //double moner
         this.hit(player);   //add a new card
         await this.timeout(500);
         this.stand(player, dealer);
@@ -197,7 +199,11 @@ export class PlayerController {
         dealer.gameStatus = GameStatus.playing;
 
         player.cards = [this.getNewCard(), this.getNewCard()];
-        dealer.cards = [this.getNewCard(), this.getNewCard()];
+
+        let firstCard = this.getNewCard();
+        firstCard.isFaceDown = true;
+
+        dealer.cards = [firstCard, this.getNewCard()];
         this.countPoints(player);
         this.countPoints(dealer);
         player.handMoney = 1;
@@ -208,35 +214,43 @@ export class PlayerController {
     }
 
 
-//金幣計算還有問題QQ
+    //金幣計算還有問題QQ
     public endRound(player: Player, dealer: Dealer): void {
+
+
 
         if (player.gameStatus === GameStatus.win) {
             //get dealer's handmoney
             player.handMoney = player.handMoney + dealer.handMoney;
             dealer.handMoney = 0;
+            dealer.cards[0].isFaceDown = false;
             console.log('end round:win')
         } else if (player.gameStatus == GameStatus.lose) {
             //lose all handmoney
             dealer.handMoney = player.handMoney + dealer.handMoney;
             player.handMoney = 0;
+            dealer.cards[0].isFaceDown = false;
             console.log('end round:lose')
         } else if (player.gameStatus === GameStatus.tie) {
+            dealer.cards[0].isFaceDown = false;
             console.log('end round:tie')
         } else if (player.gameStatus === GameStatus.blackjack) {
+            //check rules...
             player.handMoney = player.handMoney + dealer.handMoney;
             dealer.handMoney = 0;
+            dealer.cards[0].isFaceDown = false;
             console.log('end round:black jack')
         } else {
             //standby
-            console.log('endding round')
+            console.log('endding round: do nothing');
+            return;
         }
 
         //add hand money to all money
         player.allMoney = player.allMoney + player.handMoney;
         dealer.allMoney = dealer.allMoney + dealer.handMoney;
 
-        
+
     }
 
     public setPlaying(player: Player, dealer: Dealer): void {

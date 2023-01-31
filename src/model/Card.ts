@@ -7,6 +7,7 @@ export class Card {
     private _point!: number;
     private _imgPath!: string;
     private _style!: string;
+    private _isFaceDown!: boolean;
 
 
     //points: J,Q,K == 10; A == 1 or 10
@@ -23,6 +24,7 @@ export class Card {
         this._point = newPoint;
         this._imgPath = getCardUrl(newSymbol,newNumber);
         this._style = newIsHited ? "unHited" : "isHited";
+        this._isFaceDown = false;
     }
 
     public set symbol(v: string) {
@@ -75,6 +77,14 @@ export class Card {
     public set style(value: string) {
         this._style = value;
     }
+
+    public get isFaceDown(): boolean {
+        return this._isFaceDown;
+    }
+    public set isFaceDown(value: boolean) {
+        this._isFaceDown = value;
+    }
+
 }
 
 function getCardUrl(newSymbol: string, newNumber: number): string {

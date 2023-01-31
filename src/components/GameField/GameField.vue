@@ -5,14 +5,9 @@
       <div class="icontitle">BACK TO HOME</div>
     </div>
     <div class="innerwrap">
-      <div class="cards">
+      <div class="dealercardswrap">
         <div v-for="dealercard in dealerCards" :key="dealercard.imgPath" class="dealercards">
-          <div class="back">
-            <img src="../../../public/assets/Cards/back.png" class="oneCard" />
-          </div>
-          <div class="font">
-            <DealerCard :dealercard="dealercard" />
-          </div>
+          <DealerCard :dealercard="dealercard" />
         </div>
       </div>
       <div v-if="data.player.cardsStatus==CardsStatus.isBust" class="statuBox">
@@ -91,7 +86,9 @@ import {
   collection,
   query,
   where,
-  getDocs
+  getDocs,
+  setDoc,
+  doc
 } from "firebase/firestore";
 import { db } from "../../firebase";
 import { PlayerController } from "../../controller/PlayController";
@@ -102,8 +99,7 @@ import { CardsStatus } from "../../model/CardsStatus";
 import { Dealer } from "../../model/Dealer";
 import router from "../../../router";
 import { getAuth } from "firebase/auth";
-
-// let playername = this.$route.params.playername;
+import { useUserStore, userMutation } from "../../store/user";
 
 /*issue of this file:
 1. 新回合開始時，不允許點擊所有東西
@@ -111,22 +107,11 @@ import { getAuth } from "firebase/auth";
 
 //get current user
 
+const userStore = useUserStore();
+
 function toMenu() {
   router.push({ path: "/" });
 }
-
-// let player = $ref(
-//   new Player(
-//     "MurabitoB",
-//     10001,
-//     1,
-//     200,
-//     [],
-//     0,
-//     GameStatus.standby,
-//     CardsStatus.none
-//   )
-// );
 
 let testDealer = $ref(
   new Dealer("Dealer", 5, 1, 100, [], 0, GameStatus.standby, CardsStatus.none)
@@ -139,9 +124,6 @@ const playerControl = new PlayerController();
 
 let cardsStyle: string = $ref("");
 let alertVisable = $ref(false);
-// let player: Player = reactive(
-//   new Player("temp", 0, 0, 0, [], 0, GameStatus.standby, CardsStatus.none)
-// ) as Player;
 
 const data = reactive({
   player: new Player(
@@ -156,13 +138,19 @@ const data = reactive({
   )
 }) as { player: Player };
 
-onMounted(async () => {
-  //=======firebase:getting player data===========
+//if user exist
 
+onMounted(() => {
+  if (userStore.id) {
+    getUser();
+    console.log("onMounted!");
+  }
+});
+
+async function getUser() {
   const auth = getAuth();
   const user = auth.currentUser;
-  console.log('onMounted:  ' + user);
-
+  console.log(user);
   if (user) {
     const q = query(collection(db, "player"), where("id", "==", user.uid));
     // console.log('check user');
@@ -180,18 +168,32 @@ onMounted(async () => {
   if (data.player.gameStatus === GameStatus.standby) {
     playerControl.newRound(data.player, testDealer);
     alertVisable = false;
+    console.log("ready");
   }
-});
+}
 
 let playerCards = $computed(() => data.player.cards);
 
-watch(data.player, () => {
+watch(
+  userStore,
+  async () => {
+    getUser();
+  },
+  { deep: true }
+);
+
+watch(data, () => {
+  console.log("watching");
+  console.log(data.player.cards);
   if (
     data.player.cardsStatus == CardsStatus.isBlackJack &&
     !cardsStyle.includes("win")
   )
     cardsStyle = "win ";
-  if (data.player.cardsStatus == CardsStatus.isBust && !cardsStyle.includes("lose"))
+  if (
+    data.player.cardsStatus == CardsStatus.isBust &&
+    !cardsStyle.includes("lose")
+  )
     cardsStyle = "lose ";
   if (
     data.player.cardsStatus == CardsStatus.isDoubledown &&
@@ -228,10 +230,8 @@ function hit(): void {
   playerControl.hit(data.player);
   playerControl.check(data.player, testDealer);
   playerControl.endRound(data.player, testDealer);
-  // console.log(testDealer.points);
-  const auth = getAuth();
-  const user = auth.currentUser;
-  console.log(user);
+  console.log(data.player.cardsStatus);
+  console.log(data.player.gameStatus);
 }
 
 function stand(): void {
@@ -249,12 +249,6 @@ async function doubleDown(): Promise<void> {
   console.log(data.player);
 }
 
-function reset(): void {
-  playerControl.check(data.player, testDealer);
-  playerControl.newRound(data.player, testDealer);
-  playerControl.endRound(data.player, testDealer);
-}
-
 function newRound() {
   alertVisable = false;
   playerControl.newRound(data.player, testDealer);
@@ -265,18 +259,62 @@ function exit() {
   playerControl.setPlaying(data.player, testDealer);
 }
 
+async function save() {
+  console.log(data.player.cards);
+
+  //   const playerConverter = {
+  //     toFirestore: (player) => {
+  //         return {
+  //             name: city.name,
+  //             state: city.state,
+  //             country: city.country
+  //             };
+  //     },
+  //     fromFirestore: (snapshot, options) => {
+  //         const data = snapshot.data(options);
+  //         return new City(data.name, data.state, data.country);
+  //     }
+  // };
+
+  // import { doc, setDoc } from "firebase/firestore";
+
+  // // Set with cityConverter
+  // const ref = doc(db, "cities", "LA").withConverter(cityConverter);
+  // await setDoc(ref, new City("Los Angeles", "CA", "USA"));
+
+  //not success
+  const playerData = await setDoc(doc(db, "player", `${data.player.id}`), {
+    name: data.player.name,
+    id: data.player.id,
+    handMoney: data.player.handMoney,
+    allMoney: data.player.allMoney,
+    cards: data.player.cards,
+    points: data.player.points,
+    gameStatus: "standby",
+    cardsStatus: data.player.cardsStatus
+  });
+}
+
 let buttons = [
   { name: "HIT", method: hit },
   { name: "STAND", method: stand },
   { name: "DOUBLE DOWN", method: doubleDown },
-  { name: "RESET", method: reset }
+  { name: "SAVE", method: save }
 ];
 </script>
 <style scoped>
 .cards {
   display: flex;
   justify-content: center;
-  height: 350px;
+  height: 330px;
+  width: 1280px;
+  margin-bottom: 30px;
+}
+
+.dealercardswrap {
+  display: flex;
+  justify-content: center;
+  height: 250px;
   width: 1280px;
 }
 
@@ -620,38 +658,16 @@ let buttons = [
 }
 
 .dealercards {
-  display: flex;
-  transform-style: preserve-3d;
+  width: 7%;
   position: relative;
-}
-
-.font:hover {
-  transform: rotateY(180deg);
-}
-.back:hover {
-  transform: rotateY(0deg);
-}
-
-.back:first-child {
-  backface-visibility: hidden;
-  position: absolute;
-  transform: rotateY(180deg);
-  transition: all 500ms ease;
-}
-
-.font:first-child {
-  position: absolute;
-  backface-visibility: hidden;
-  transform: rotateY(0deg);
-  backface-visibility: hidden;
-  transition: all 500ms ease;
+  left: -134px;
+  /* top: 95px; */
 }
 
 .menuBlock {
   align-items: center;
   cursor: pointer;
   display: flex;
-  margin: 15px;
 }
 
 .icon {

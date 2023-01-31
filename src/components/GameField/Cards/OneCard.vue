@@ -1,6 +1,6 @@
 <template>
   <img :src="card.imgPath" :class="card.style" class="oneCard" />
-  <!-- <button @click="check">card</button> -->
+
 </template>
 
 <script setup lang="ts">
