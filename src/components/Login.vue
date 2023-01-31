@@ -7,15 +7,8 @@
       <div class="icontitle">BACK TO HOME</div>
     </div>
     <div class="blackjack">
-      <span>REGIST</span>
+      <span>Login</span>
     </div>
-    <div class="reminder">
-      <span>Sorry, Data update not supported!!</span>
-      <br />
-      <span>Please remenber your name and password!!</span>
-    </div>
-
-    <!-- 記得修改成不能點=_= -->
     <div class="regist">
       <div class="registBlock" v-for="li in inputs" :key="li.name">
         <div :class="li.icon"></div>
@@ -50,7 +43,7 @@ import {
 import { db } from "../firebase";
 
 //=========firebase==========
-
+//確認登入後，用onMounted查完整玩家資料
 async function submit() {
   try {
     const q = query(
@@ -59,42 +52,35 @@ async function submit() {
     );
     //返回一個query
     const querySnapshot = await getDocs(q);
-    let checker = null;
+    let checker = { name: "", password: "", status: "", id: "" };
     querySnapshot.forEach(doc => {
-      checker = doc.data();
+      checker.name = doc.data().name;
+      checker.password = doc.data().password;
+      checker.status = doc.data().status;
+      checker.id = doc.id;
     });
-    console.log(checker);
-    if (checker) {
-      alert("已經被註冊過了");
-      return;
-    } else {
-      console.log("尚未被註冊");
-      const loginData = await addDoc(collection(db, "loginData"), {
+    // console.log(checker);
+    if (checker.password === inputs[1].input) {
+      //更改登入狀態，寫回firebase
+      //
+      const loginData = await setDoc(doc(db, "loginData", checker.id), {
+        //不全部寫出來會被覆蓋成空的QQ
         name: inputs[0].input,
         password: inputs[1].input,
-        status: "logout"
+        status: "login"
       });
 
-      const playerData = await setDoc(doc(db, "player", loginData.id), {
-        name: inputs[0].input,
-        id: loginData.id,
-        handMoney: 0,
-        allMoney: 5,
-        cards: null,
-        points: 0,
-        gameStatus: "standby",
-        cardsStatus: "none"
-      });
-
-      alert("註冊成功！用戶名：" + inputs[0].input);
-      router.push({ path: "/" });
+      alert("登入成功！");
+      router.push({ path: "/", params: { playername: checker.name } });
+      return;
+    } else {
+      alert("密碼錯誤┗|｀O′|┛");
     }
   } catch (e) {
     console.error("Error adding document: ", e);
   }
 }
 
-//用兩個class，一個放圖片一個喬位置？
 const inputs = $ref([
   { name: "PLAYER NAME", icon: "name_icon", type: "text", input: "" },
   {
@@ -112,7 +98,7 @@ const buttons = [
 ];
 
 function cancel() {
-  inputs.forEach((e: { input: string; }) => {
+  inputs.forEach((e: { input: string }) => {
     e.input = "";
   });
 }

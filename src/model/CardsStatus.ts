@@ -1,3 +1,7 @@
 export enum CardsStatus {
-    none, isStand, isDoubledown, isBlackJack, isBust
+    none = "none",
+    isStand = "isStand",
+    isDoubledown = "isDoubledown",
+    isBlackJack = "isBlackJack",
+    isBust = "isBust"
 }

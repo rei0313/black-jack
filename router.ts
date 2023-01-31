@@ -35,6 +35,14 @@ const routes = [
       const regist = await import('./src/components/Regist.vue');
       return regist;
     }
+  },
+  {
+    path: '/login',
+    name: 'login',
+    component: async () => {
+      const login = await import('./src/components/Login.vue');
+      return login;
+    }
   }
 ];
 

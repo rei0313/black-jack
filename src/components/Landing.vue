@@ -1,20 +1,22 @@
 
 
 <template>
-  <div class="wrap">
-    <div class="blackjack">
-      <span>BLACK JACK</span>
-    </div>
+  
+    <div class="wrap">
+      <div class="blackjack">
+        <span>BLACK JACK</span>
+      </div>
 
-    <div class="menu">
-      <div class="menuBlock" v-for="li in menublocks" :key="li.name" @click="li.method">
-        <div :class="li.icon"></div>
-        <div class="subtitle">{{li.name}}</div>
-        <!-- <div class="player">{{ }}</div> -->
-        <!-- 做好player再補 -->
+      <div class="menu">
+        <div class="menuBlock" v-for="li in menublocks" :key="li.name" @click="li.method">
+          <div :class="li.icon"></div>
+          <div class="subtitle">{{li.name}}</div>
+          <!-- <div class="player">{{ }}</div> -->
+          <!-- 做好player再補 -->
+        </div>
       </div>
     </div>
-  </div>
+
 </template>
     
 
@@ -23,12 +25,26 @@
 <script setup lang="ts">
 import router from "../../router";
 
+
+//=========Loading=========
+
+
+
+
+
+
+
 //用兩個class，一個放圖片一個喬位置？
 const menublocks = [
   { name: "NEW GAME", method: toPlay, icon: "newGame_icon" },
   { name: "RANKING BOARD", method: toRankingBoard, icon: "rankingBoard_icon" },
+  { name: "LOGIN", method: toLogin, icon: "login_icon" },
   { name: "REGIST", method: toRegist, icon: "regist_icon" }
 ];
+
+function toLogin() {
+  router.push({ path: "/login" });
+}
 
 function toPlay() {
   router.push({ path: "/game" });
@@ -62,6 +78,13 @@ function toRegist() {
   }
 }
 
+.login_icon {
+  margin-right: 20px;
+  height: 32px;
+  width: 32px;
+  background-image: url("../../public/assets/UI/tile017.png");
+}
+
 .newGame_icon {
   margin-right: 20px;
   height: 32px;
@@ -70,7 +93,9 @@ function toRegist() {
 }
 
 /* 暫時先這樣，之後再改成hover父層 */
-.newGame_icon:hover,.rankingBoard_icon:hover,.regist_icon:hover {
+.newGame_icon:hover,
+.rankingBoard_icon:hover,
+.regist_icon:hover {
   animation: spin 1s;
   animation-iteration-count: infinite;
 }

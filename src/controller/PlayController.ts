@@ -65,16 +65,24 @@ export class PlayerController {
     public countPoints(player: Player | Dealer): void {
         let points = player.cards.reduce((accumulator, currentValue) =>
             accumulator + currentValue.point, 0
-        );
 
+        );
+        console.log("adding");
         //如果有Ace且超過21點，則讓Ace=1點
         if (points > 21) {
+            console.log("Over 21!!");
             player.cards.forEach((e) => {
                 if (e.number === 1) {
+                    console.log("Change Ace!!");
+                    //測試中！
                     e.point = 1;
                 }
             })
         }
+        //重算一次
+        points = player.cards.reduce((accumulator, currentValue) =>
+            accumulator + currentValue.point, 0
+        );
 
         player.points = points;
     }
@@ -85,41 +93,48 @@ export class PlayerController {
         this.countPoints(player);
         this.countPoints(dealer);
 
+        if (player.points < 21 && player.cardsStatus === CardsStatus.none) {
+            console.log('nothong happend');
+            return;
+        }
+
         if (player.points > 21) {
             player.cardsStatus = CardsStatus.isBust;
             player.gameStatus = GameStatus.lose;
             dealer.gameStatus = GameStatus.win;
+            return;
         }
 
         if (player.points === 21) {
             player.cardsStatus = CardsStatus.isBlackJack;
             this.timeout(2000);
             player.gameStatus = GameStatus.blackjack;
+            return;
         }
 
         //小於21沒有stand或doubledown，就什麼都不做
 
-        if (player.cardsStatus == CardsStatus.isStand || player.cardsStatus == CardsStatus.isDoubledown) {
-            if (dealer.points <= 21) {
-                if (dealer.points > player.points) {
-                    dealer.gameStatus = GameStatus.win;
-                    player.gameStatus = GameStatus.lose;
-                } else if (dealer.points < player.points) {
-                    dealer.gameStatus = GameStatus.lose;
-                    player.gameStatus = GameStatus.win;
-                } else if (dealer.points > 21) {
-                    dealer.gameStatus = GameStatus.lose;
-                    player.gameStatus = GameStatus.win;
-                } else {
-                    dealer.gameStatus = GameStatus.tie;
-                    player.gameStatus = GameStatus.tie;
-                }
 
-            } else {
+        if (dealer.points <= 21) {
+            if (dealer.points > player.points) {
+                dealer.gameStatus = GameStatus.win;
+                player.gameStatus = GameStatus.lose;
+            } else if (dealer.points < player.points) {
                 dealer.gameStatus = GameStatus.lose;
                 player.gameStatus = GameStatus.win;
+            } else if (dealer.points > 21) {
+                dealer.gameStatus = GameStatus.lose;
+                player.gameStatus = GameStatus.win;
+            } else {
+                dealer.gameStatus = GameStatus.tie;
+                player.gameStatus = GameStatus.tie;
             }
+
+        } else {
+            dealer.gameStatus = GameStatus.lose;
+            player.gameStatus = GameStatus.win;
         }
+
 
     }
 
@@ -144,11 +159,11 @@ export class PlayerController {
     }
 
     public async stand(player: Player, dealer: Dealer): Promise<void> {
-        
-        if(player.cardsStatus!==CardsStatus.isDoubledown){
+
+        if (player.cardsStatus !== CardsStatus.isDoubledown) {
             player.cardsStatus = CardsStatus.isStand;
         }
-        
+
 
         while (dealer.points < 17) {
             this.hit(dealer);
@@ -161,10 +176,11 @@ export class PlayerController {
     }
     // 若閒家首兩張牌點數之和為11點，可以選擇加倍投注，但加注後僅獲發1張牌
     // 還沒做牌的判定!!
-    public doubleDown(player: Player,dealer:Dealer): void {
+    public async doubleDown(player: Player, dealer: Dealer): Promise<void> {
         player.handMoney = player.handMoney * 2;    //double moner
         this.hit(player);   //add a new card
-        this.stand(player,dealer);
+        await this.timeout(500);
+        this.stand(player, dealer);
         player.cardsStatus = CardsStatus.isDoubledown;
         //recount point
         // this.countPoints(player);
@@ -192,28 +208,35 @@ export class PlayerController {
     }
 
 
-
+//金幣計算還有問題QQ
     public endRound(player: Player, dealer: Dealer): void {
 
-        if (player.gameStatus == GameStatus.win) {
+        if (player.gameStatus === GameStatus.win) {
             //get dealer's handmoney
             player.handMoney = player.handMoney + dealer.handMoney;
             dealer.handMoney = 0;
+            console.log('end round:win')
         } else if (player.gameStatus == GameStatus.lose) {
             //lose all handmoney
             dealer.handMoney = player.handMoney + dealer.handMoney;
             player.handMoney = 0;
-        } else if (player.gameStatus == GameStatus.tie) {
-            console.log('tie')
+            console.log('end round:lose')
+        } else if (player.gameStatus === GameStatus.tie) {
+            console.log('end round:tie')
+        } else if (player.gameStatus === GameStatus.blackjack) {
+            player.handMoney = player.handMoney + dealer.handMoney;
+            dealer.handMoney = 0;
+            console.log('end round:black jack')
         } else {
             //standby
-            console.log('check but nothing happended')
+            console.log('endding round')
         }
 
         //add hand money to all money
         player.allMoney = player.allMoney + player.handMoney;
         dealer.allMoney = dealer.allMoney + dealer.handMoney;
 
+        
     }
 
     public setPlaying(player: Player, dealer: Dealer): void {

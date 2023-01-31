@@ -1,50 +1,52 @@
 <template>
-  <div class="background">
+  <div class="outwrap">
     <div class="menuBlock" @click="toMenu">
       <div class="icon"></div>
       <div class="icontitle">BACK TO HOME</div>
     </div>
-    <div class="cards">
-      <div v-for="dealercard in dealerCards" :key="dealercard.imgPath" class="dealercards">
-        <div class="back">
-          <img src="../../../public/assets/Cards/back.png" class="oneCard" />
-        </div>
-        <div class="font">
-          <DealerCard :dealercard="dealercard" />
-        </div>
-      </div>
-    </div>
-    <div v-if="testPlayer1.cardsStatus==CardsStatus.isBust" class="statuBox">
-      <span>BUST !</span>
-    </div>
-    <div v-if="alertVisable==true" class="alertBox">
-      <div class="alertTitle" v-if="testPlayer1.gameStatus==GameStatus.lose">Ooops!! You lose!!</div>
-      <div class="alertTitle" v-if="testPlayer1.gameStatus==GameStatus.win">Congrats!! You win!!</div>
-      <div class="alertTitle" v-if="testPlayer1.gameStatus==GameStatus.tie">Tie...</div>
-      <div class="alertTitle" v-if="testPlayer1.gameStatus==GameStatus.blackjack">It's BLACKJACK!!</div>
-      <div class="btnwrap">
-        <div class="newRoundBtn" @click="newRound">
-          <div class="btnLi"></div>
-          <p>NEW ROUND</p>
-        </div>
-        <div class="newRoundBtn" @click="exit">
-          <div class="btnLi"></div>
-          <p>EXIT</p>
+    <div class="innerwrap">
+      <div class="cards">
+        <div v-for="dealercard in dealerCards" :key="dealercard.imgPath" class="dealercards">
+          <div class="back">
+            <img src="../../../public/assets/Cards/back.png" class="oneCard" />
+          </div>
+          <div class="font">
+            <DealerCard :dealercard="dealercard" />
+          </div>
         </div>
       </div>
-    </div>
-    <div v-if="testPlayer1.cardsStatus==CardsStatus.isStand" class="statuBox">
-      <span>STAND...</span>
-    </div>
-    <div v-if="testPlayer1.cardsStatus==CardsStatus.isDoubledown" class="statuBox">
-      <span style="font-size: 40px">DOUBLE DOWN</span>
-    </div>
-    <div v-if="testPlayer1.cardsStatus==CardsStatus.isBlackJack" class="blackjack">
-      <span>BLACK JACK!!</span>
-    </div>
-    <div class="cards" :class="cardsStyle">
-      <div v-for="card in playerCards" :key="card.imgPath">
-        <OneCard :card="card" />
+      <div v-if="testPlayer1.cardsStatus==CardsStatus.isBust" class="statuBox">
+        <span>BUST !</span>
+      </div>
+      <div v-if="alertVisable==true" class="alertBox">
+        <div class="alertTitle" v-if="testPlayer1.gameStatus==GameStatus.lose">Ooops!! You lose!!</div>
+        <div class="alertTitle" v-if="testPlayer1.gameStatus==GameStatus.win">Congrats!! You win!!</div>
+        <div class="alertTitle" v-if="testPlayer1.gameStatus==GameStatus.tie">Tie...</div>
+        <div class="alertTitle" v-if="testPlayer1.gameStatus==GameStatus.blackjack">It's BLACKJACK!!</div>
+        <div class="btnwrap">
+          <div class="newRoundBtn" @click="newRound">
+            <div class="btnLi"></div>
+            <p>NEW ROUND</p>
+          </div>
+          <div class="newRoundBtn" @click="exit">
+            <div class="btnLi"></div>
+            <p>EXIT</p>
+          </div>
+        </div>
+      </div>
+      <div v-if="testPlayer1.cardsStatus==CardsStatus.isStand" class="statuBox">
+        <span>STAND...</span>
+      </div>
+      <div v-if="testPlayer1.cardsStatus==CardsStatus.isDoubledown" class="statuBox">
+        <span style="font-size: 40px">DOUBLE DOWN</span>
+      </div>
+      <div v-if="testPlayer1.cardsStatus==CardsStatus.isBlackJack" class="blackjack">
+        <span>BLACK JACK!!</span>
+      </div>
+      <div class="cards" :class="cardsStyle">
+        <div v-for="card in playerCards" :key="card.imgPath">
+          <OneCard :card="card" />
+        </div>
       </div>
     </div>
     <div class="buttons">
@@ -77,12 +79,6 @@
         <div class="subNumber">{{testPlayer1.name}}</div>
       </div>
     </div>
-    <!-- <video autoplay muted loop id="backgroundVedio">
-      <source
-        src="../../../assets/Free Animation Loop Background_ Pixel Blocks.mp4"
-        type="video/mp4"
-      />
-    </video>-->
   </div>
 </template>
 <script setup lang="ts">
@@ -94,10 +90,12 @@ import { db } from "../../firebase";
 import { PlayerController } from "../../controller/PlayController";
 import { Player } from "../../model/Player";
 import { GameStatus } from "../../model/GameStatus";
-import { onMounted, watch } from "vue";
+import { defineProps, onMounted, watch } from "vue";
 import { CardsStatus } from "../../model/CardsStatus";
 import { Dealer } from "../../model/Dealer";
 import router from "../../../router";
+
+// let playername = this.$route.params.playername;
 
 /*issue of this file:
 1. 新回合開始時，不允許點擊所有東西
@@ -138,10 +136,25 @@ const playerControl = new PlayerController();
 let cardsStyle: string = $ref("");
 let alertVisable = $ref(false);
 
-
 onMounted(() => {
+  //=======firebase:getting player data===========
+  // console.log(playername)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   if (testPlayer1.gameStatus === GameStatus.standby) {
-    playerControl.newRound(testPlayer1, testDealer); 
+    playerControl.newRound(testPlayer1, testDealer);
     alertVisable = false;
   }
 });
@@ -169,7 +182,10 @@ watch(testPlayer1, () => {
   }
 
   if (testPlayer1.cardsStatus == CardsStatus.none) cardsStyle = "";
-  if (testPlayer1.gameStatus !== GameStatus.standby && testPlayer1.gameStatus !== GameStatus.playing) {
+  if (
+    testPlayer1.gameStatus !== GameStatus.standby &&
+    testPlayer1.gameStatus !== GameStatus.playing
+  ) {
     alertVisable = true;
     switch (testPlayer1.gameStatus) {
       case "win":
@@ -183,13 +199,12 @@ watch(testPlayer1, () => {
         break;
     }
   }
-
 });
 
 function hit(): void {
   playerControl.hit(testPlayer1);
   playerControl.check(testPlayer1, testDealer);
-  playerControl.endRound(testPlayer1,testDealer);
+  playerControl.endRound(testPlayer1, testDealer);
   console.log(testDealer.points);
   console.log(testPlayer1.points);
 }
@@ -197,36 +212,41 @@ function hit(): void {
 function stand(): void {
   playerControl.stand(testPlayer1, testDealer);
   playerControl.check(testPlayer1, testDealer);
-  playerControl.endRound(testPlayer1,testDealer);
+  playerControl.endRound(testPlayer1, testDealer);
   console.log(testDealer.gameStatus);
   console.log(testPlayer1.gameStatus);
-
 }
 
-function doubleDown(): void {
-  playerControl.doubleDown(testPlayer1, testDealer);
-  playerControl.check(testPlayer1, testDealer);
-  playerControl.endRound(testPlayer1,testDealer);
+async function doubleDown(): Promise<void> {
+  await playerControl.doubleDown(testPlayer1, testDealer);
+  await playerControl.check(testPlayer1, testDealer);
+  playerControl.endRound(testPlayer1, testDealer);
   console.log(testPlayer1);
 }
 
-function split(): void {}
+function reset(): void {
+  playerControl.check(testPlayer1, testDealer);
+  playerControl.newRound(testPlayer1, testDealer);
+  playerControl.endRound(testPlayer1, testDealer);
+}
 
 function newRound() {
   alertVisable = false;
   playerControl.newRound(testPlayer1, testDealer);
+  
 }
 
-function exit(){
+function exit() {
   alertVisable = false;
-  playerControl.setPlaying(testPlayer1,testDealer);
+  playerControl.setPlaying(testPlayer1, testDealer);
+  
 }
 
 let buttons = [
   { name: "HIT", method: hit },
   { name: "STAND", method: stand },
   { name: "DOUBLE DOWN", method: doubleDown },
-  { name: "SPLIT", method: split }
+  { name: "RESET", method: reset }
 ];
 </script>
 <style scoped>
