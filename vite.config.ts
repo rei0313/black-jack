@@ -33,12 +33,6 @@ export default defineConfig({
         secure: false,
         rewrite: path => path.replace(/^\/api/, 'https://localhost:8080/my-store')
       },
-      '/linepay': {
-        target: 'https://sandbox-api-pay.line.me/',
-        changeOrigin: true,
-        secure: false,
-        rewrite: path => path.replace(/^\/linepay/, 'https://sandbox-api-pay.line.me')
-      }
     }
   }
 })

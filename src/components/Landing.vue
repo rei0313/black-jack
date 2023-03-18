@@ -11,7 +11,7 @@
         <div :class="li.icon"></div>
         <div class="subtitle">{{li.name}}</div>
       </div>
-      <div class="subtitle welcome">WELCOME!! {{data.player.name }}</div>
+      <div class="subtitle welcome">WELCOME!! {{playerName }}</div>
     </div>
   </div>
 </template>
@@ -22,58 +22,36 @@
 <script setup lang="ts">
 import { watch, reactive, onMounted } from "vue";
 import router from "../../router";
-import { Player } from "../model/Player";
-import { GameStatus } from "../model/GameStatus";
-import { CardsStatus } from "../model/CardsStatus";
-import { getAuth } from "firebase/auth";
-import { collection, getDocs, query, where } from "firebase/firestore";
-import { db } from "../firebase";
-import { setTimeout } from "timers/promises";
-import { useUserStore } from "../store/user";
 
+let playerName = $ref('')
 //=========Loading=========
-const userStore = useUserStore();
-const data = reactive({
-  player: new Player("", 0, 0, 0, [], 0, GameStatus.standby, CardsStatus.none)
-}) as { player: Player };
+
 
 onMounted(() => {
-  if (userStore.id) {
-    getUser();
-  } else {
-    console.log("something wrong");
-  }
+  fetch("/api/user/info", {
+    method: "GET",
+    headers:{
+      'Cookie': 'Authorization='
+    }
+  })
+    .then(response => 
+response.json())
+    .then(data => {
+      playerName = data.nickname
+    }).catch((e)=>{
+      console.log(e);
+    });
 });
 
-async function getUser() {
-  const auth = getAuth();
-  const user = auth.currentUser;
-  console.log(user);
-  if (user) {
-    const q = query(collection(db, "player"), where("id", "==", user.uid));
-    // console.log('check user');
-    const querySnapshot = await getDocs(q);
-    // console.log(querySnapshot);
-    querySnapshot.forEach(doc => {
-      data.player = doc.data() as Player;
-    });
-  }
-}
 
-watch(
-  userStore,
-  async () => {
-    getUser();
-  },
-  { deep: true }
-);
+
 
 //用兩個class，一個放圖片一個喬位置？
 const menublocks = [
   { name: "NEW GAME", method: toPlay, icon: "newGame_icon" },
-  { name: "RANKING BOARD", method: toRankingBoard, icon: "rankingBoard_icon" },
-  { name: "LOGIN", method: toLogin, icon: "login_icon" },
-  { name: "REGIST", method: toRegist, icon: "regist_icon" }
+  { name: "BACK TO SHOP", method: toRankingBoard, icon: "rankingBoard_icon" },
+  // { name: "LOGIN", method: toLogin, icon: "login_icon" },
+  // { name: "REGIST", method: toRegist, icon: "regist_icon" }
 ];
 
 function toLogin() {
@@ -84,7 +62,7 @@ function toPlay() {
   router.push("/game");
 }
 function toRankingBoard() {
-  router.push("/rank");
+  window.location.replace("http://localhost:5173/my-store/home");
 }
 function toRegist() {
   router.push("/regist");

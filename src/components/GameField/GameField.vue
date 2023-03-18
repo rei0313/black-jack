@@ -14,18 +14,18 @@
         <span>BUST !</span>
       </div>
       <div v-if="alertVisable==true" class="alertBox">
-        <div class="alertTitle" v-if="data.player.gameStatus==GameStatus.lose">Ooops!! You lose!!</div>
+        <div class="alertTitle" v-if="data.player.gameStatus==GameStatus.lose">
+          <p>Ooops!! You lose!!</p>
+        </div>
         <div class="alertTitle" v-if="data.player.gameStatus==GameStatus.win">Congrats!! You win!!</div>
         <div class="alertTitle" v-if="data.player.gameStatus==GameStatus.tie">Tie...</div>
         <div class="alertTitle" v-if="data.player.gameStatus==GameStatus.blackjack">It's BLACKJACK!!</div>
+        <div class="result" v-if="data.player.gameStatus==GameStatus.win||data.player.gameStatus==GameStatus.blackjack">恭喜您獲得特殊優惠券！</div>
+        <div class="result" v-if="data.player.gameStatus!=GameStatus.win&&data.player.gameStatus!=GameStatus.blackjack">太可惜了！沒有獲得優惠券ಠ_ಠ</div>
         <div class="btnwrap">
-          <div class="newRoundBtn" @click="newRound">
+          <div class="newRoundBtn" @click="backToShop">
             <div class="btnLi"></div>
-            <p>NEW ROUND</p>
-          </div>
-          <div class="newRoundBtn" @click="exit">
-            <div class="btnLi"></div>
-            <p>EXIT</p>
+            <p class="remind">BACK TO SHOP</p>
           </div>
         </div>
       </div>
@@ -51,7 +51,7 @@
       </button>
     </div>
     <div class="playerStatus">
-      <div class="bet">
+      <!-- <div class="bet">
         <div class="betImg"></div>
         <div class="subtitle">BET MONEY:</div>
         <div class="subNumber">{{ data.player.handMoney }}</div>
@@ -60,19 +60,19 @@
         <div class="moneyImg"></div>
         <div class="subtitle">HAND MONEY:</div>
         <div class="subNumber">{{data.player.allMoney}}</div>
-      </div>
-      <div class="point">
-        <div class="pointImg"></div>
-        <div class="subtitle">POINT:</div>
-        <div class="subNumber">{{data.player.points}}</div>
-      </div>
-    </div>
-    <div class="playerStatus">
+      </div>-->
       <div class="playerData">
         <div class="playerImg"></div>
         <div class="subtitle">PLAYER NAME:</div>
-        <div class="subNumber">{{data.player.name}}</div>
+        <div class="subNumber">{{playerName}}</div>
       </div>
+      <div class="point">
+        <div class="pointImg"></div>
+        <div class="subtitle">CURRENT POINT:</div>
+        <div class="subNumber">{{data.player.points}}</div>
+      </div>
+      <!-- </div>
+      <div class="playerStatus">-->
     </div>
   </div>
 </template>
@@ -90,7 +90,6 @@ import {
   setDoc,
   doc
 } from "firebase/firestore";
-import { db } from "../../firebase";
 import { PlayerController } from "../../controller/PlayController";
 import { Player } from "../../model/Player";
 import { GameStatus } from "../../model/GameStatus";
@@ -106,8 +105,9 @@ import { useUserStore, userMutation } from "../../store/user";
 */
 
 //get current user
-
-const userStore = useUserStore();
+function backToShop() {
+  window.location.replace("http://localhost:5173/my-store/home");
+}
 
 function toMenu() {
   router.push({ path: "/" });
@@ -121,6 +121,7 @@ let testDealer = $ref(
 let dealerCards = $computed(() => testDealer.cards);
 
 const playerControl = new PlayerController();
+let playerName = $ref("");
 
 let cardsStyle: string = $ref("");
 let alertVisable = $ref(false);
@@ -141,46 +142,23 @@ const data = reactive({
 //if user exist
 
 onMounted(() => {
-  if (userStore.id) {
-    getUser();
-    console.log("onMounted!");
-  }
+  newRound();
+  fetch("/api/user/info", {
+    method: "GET",
+    headers: {
+      Cookie: "Authorization="
+    }
+  })
+    .then(response => response.json())
+    .then(data => {
+      playerName = data.nickname;
+    })
+    .catch(e => {
+      console.log(e);
+    });
 });
 
-async function getUser() {
-  const auth = getAuth();
-  const user = auth.currentUser;
-  console.log(user);
-  if (user) {
-    const q = query(collection(db, "player"), where("id", "==", user.uid));
-    // console.log('check user');
-    const querySnapshot = await getDocs(q);
-    // console.log(querySnapshot);
-    querySnapshot.forEach(doc => {
-      data.player = doc.data() as Player;
-    });
-  } else {
-    //要改寫
-    alert("not login");
-    router.push("/");
-  }
-
-  if (data.player.gameStatus === GameStatus.standby) {
-    playerControl.newRound(data.player, testDealer);
-    alertVisable = false;
-    console.log("ready");
-  }
-}
-
 let playerCards = $computed(() => data.player.cards);
-
-watch(
-  userStore,
-  async () => {
-    getUser();
-  },
-  { deep: true }
-);
 
 watch(data, () => {
   console.log("watching");
@@ -213,8 +191,13 @@ watch(data, () => {
   ) {
     alertVisable = true;
     switch (data.player.gameStatus) {
+      case "blackjack":
+      printCoupon();
+        break;
       case "win":
         cardsStyle = "win";
+        //給他一張優惠券
+        printCoupon();
         break;
       case "lose":
         cardsStyle = "lose";
@@ -225,6 +208,17 @@ watch(data, () => {
     }
   }
 });
+
+function printCoupon(){
+  fetch("/api/coupon/add?code=BLACKJACK" , {
+    method: "POST"
+  }).then(response => {
+    if (response.status == 200) {
+      alert('已發送優惠券')
+    }
+  });
+}
+
 
 function hit(): void {
   playerControl.hit(data.player);
@@ -297,12 +291,17 @@ async function save() {
 
 let buttons = [
   { name: "HIT", method: hit },
-  { name: "STAND", method: stand },
-  { name: "DOUBLE DOWN", method: doubleDown },
-  { name: "SAVE", method: save }
+  { name: "STAND", method: stand }
+  // { name: "DOUBLE DOWN", method: doubleDown },
+  // { name: "SAVE", method: save }
 ];
 </script>
 <style scoped>
+.remind {
+  font-size: 25pt;
+  font-weight: 800;
+}
+
 .cards {
   display: flex;
   justify-content: center;
@@ -473,7 +472,7 @@ let buttons = [
   box-shadow: 0px 0px 3px 2px white;
   z-index: 1;
   top: 44%;
-  left: 45%;
+  left: 43%;
   height: 80px;
   width: 250px;
   font-size: 50px;
@@ -524,7 +523,7 @@ let buttons = [
   box-shadow: 0px 0px 3px 2px white;
   z-index: 2;
   top: 20%;
-  left: 35%;
+  left: 30%;
   height: 400px;
   width: 650px;
   font-size: 50px;
@@ -534,6 +533,13 @@ let buttons = [
 .alertTitle {
   margin-top: 100px;
   margin-bottom: 100px;
+}
+
+.result {
+  margin-top: 30px;
+  margin-bottom: 30px;
+  font-size: 30px;
+  font-weight: bold;
 }
 
 .btnwrap {
